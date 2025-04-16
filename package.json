@@ -1,28 +1,5 @@
 {
-  "name": "auction-dapp",
-  "version": "1.0.0",
-  "description": "",
-  "main": "truffle-config.js",
-  "directories": {
-    "test": "test"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Kiran9223/Auction-DApp.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/Kiran9223/Auction-DApp/issues"
-  },
-  "homepage": "https://github.com/Kiran9223/Auction-DApp#readme",
-  "devDependencies": {
-    "@openzeppelin/contracts": "^5.3.0",
-    "ganache": "^7.9.2"
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.9.5"
   }
 }
