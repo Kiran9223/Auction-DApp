@@ -21,7 +21,8 @@
   
   .form input[type="name"],
   .form input[type="description"],
-  .form input[type="number"] {
+  .form input[type="number"],
+  .form input[type="file"] {
     border-radius: 0.5rem;
     padding: 1rem 0.75rem;
     width: 100%;
@@ -36,7 +37,8 @@
   
   .form input[type="name"]:focus,
   .form input[type="description"]:focus,
-  .form input[type="number"]:focus {
+  .form input[type="number"]:focus,
+  .form input[type="file"]:focus {
     outline: 2px solid var(--clr);
   }
   

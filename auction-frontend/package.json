@@ -19,6 +19,8 @@
     "@mui/material": "^7.0.2",
     "axios": "^1.8.4",
     "ethers": "^6.13.5",
+    "metamask-react": "^2.7.0",
+    "nft.storage": "^7.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hooks-global-state": "^2.1.0",

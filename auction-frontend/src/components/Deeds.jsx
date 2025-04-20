@@ -1,63 +1,247 @@
-import React from 'react'
+import React, { use } from 'react'
 import DeedCard from './DeedCard'
 import MintButton from './MintButton'
 import './styles/Deeds.css'
+import { useState, useEffect } from 'react';
+import { ethers } from 'ethers';
+import { uploadFileToIPFS, uploadJSONToIPFS } from '../pinata';
+import NFTAuction from '../abis/NFTAuction.json'
+import axios from 'axios';
+
+const GetIpfsUrlFromPinata = (pinataUrl) => {
+  var IPFSUrl = pinataUrl.split("/");
+  const lastIndex = IPFSUrl.length;
+  IPFSUrl = "https://ipfs.io/ipfs/"+IPFSUrl[lastIndex-1];
+  return IPFSUrl;
+};
 
 const Deeds = () => {
-  const [name, setName] = React.useState('')
-  const [description, setDescription] = React.useState('')
-  const [price, setPrice] = React.useState('')
 
-  function handleMint(){
-    console.log(name, description, price)
-    // Add minting logic here
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [price, setPrice] = useState(0)
+  const [status, setStatus] = useState('')
+  const [fileURL, setFileURL] = useState(null)
+  const [deedsStatus, setDeedsStatus] = useState('No deeds yet')
+  const [deeds, setDeeds] = useState([])
 
-    clearFields();
+
+  async function handleMint(){
+
   }
 
-  function clearFields(){
-    setName('')
-    setDescription('')
-    setPrice('')
+  async function OnChangeFile(e) {
+    var file = e.target.files[0];
+
+    try {
+      const response = await uploadFileToIPFS(file);
+      if(response.success === true) {
+        console.log("File uploaded to IPFS: ", response.pinataURL);
+        setFileURL(response.pinataURL);
+        setStatus("File uploaded to IPFS successfully!", response.pinataURL);
+      }
+    } catch(e) {
+      console.log("Error uploading file to IPFS: ", e);
+      setStatus("Error uploading file to IPFS: ", e.message);
+    }
   }
 
+  async function uploadMetaDataToIPFS() {
+    if(!name || !description || !price || !fileURL) {
+      return;
+    }
 
+    const nftJSON = {
+      name: name,
+      description: description,
+      price: price,
+      image: fileURL
+    }
+
+    try {
+      const response = await uploadJSONToIPFS(nftJSON);
+      if(response.success === true) {
+        console.log("Metadata uploaded to IPFS: ", response);
+        setStatus("Metadata uploaded to IPFS successfully!", response.pinataURL);
+        return response.pinataURL;
+      }
+
+    } catch(e) {
+      console.log("Error uploading metadata to IPFS: ", e);
+      // setStatus("Error uploading metadata to IPFS: ", e.message);
+    }
+
+
+  }
+
+  async function listNFT(e) {
+    e.preventDefault();
+
+    try {
+      const metadataURL = await uploadMetaDataToIPFS();
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      console.log("Provider: ", provider);
+      console.log("Signer: ", signer);
+      console.log("Metadata URL: ", metadataURL);
+      
+
+      setStatus("Please while... Uploading(may take up to 5 mins) NFT to IPFS...");
+
+      let contract = new ethers.Contract(
+        "0xd1bF6953902ace77499664afc835bAE90e21Ee37",
+        NFTAuction.abi,
+        signer
+      );
+
+      const priceL = ethers.parseEther(price.toString())
+      let listingPrice = await contract.getListPrice();
+      listingPrice = listingPrice.toString();
+
+      let transaction = await contract.createToken(metadataURL, priceL, {value: listingPrice});
+      await transaction.wait();
+
+      setStatus("NFT Listed Successfully!");
+      setName('');
+      setDescription('');
+      setPrice(0);
+      setFileURL(null);
+      
+      alert("NFT Listed Successfully!");
+      // refresh the page
+      window.location.reload();
+    } catch(e) {
+      // alert("Error uploading file to IPFS: ", e);
+      console.log("Error minting the token: ", e);
+    }  
+  } 
+
+
+  //***************************************//
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [deedStatus, setDeedStatus] = useState('');
+  const CONTRACT_ADDRESS = '0xd1bF6953902ace77499664afc835bAE90e21Ee37';
+  useEffect(() => {
+    // run once on mount
+    fetchAllNFTs();
+  }, []);
+
+  async function fetchAllNFTs() {
+    try {
+      setDeedStatus('⏳ Requesting wallet access...');
+      // 1. connect to MetaMask
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send('eth_requestAccounts', []);
+
+      setDeedStatus('⏳ Fetching NFTs from contract…');
+      // 2. instantiate contract with a provider (for read-only calls)
+      const contract = new ethers.Contract(
+        CONTRACT_ADDRESS,
+        NFTAuction.abi,
+        provider
+      );
+
+      // 3. call your read-only getter
+      const raw = await contract.getAllNFTs();
+
+      // 4. hydrate each NFT
+      const items = await Promise.all(
+        raw.map(async (i) => {
+          // pull tokenURI, convert to HTTP URL, fetch metadata
+          const uri = GetIpfsUrlFromPinata(await contract.tokenURI(i.tokenId));
+          const { data: meta } = await axios.get(uri);
+
+          return {
+            tokenId: i.tokenId.toString(),  // BigInt → string
+            seller: i.seller,
+            owner: i.owner,
+            price: ethers.formatEther(i.price), // BigNumber → string ETH
+            image: meta.image,
+            name:  meta.name,
+            description: meta.description,
+          };
+        })
+      );
+
+      // 5. store in state
+      setData(items);
+      setDeedStatus('');
+    } catch (err) {
+      console.error(err);
+      setDeedStatus('❌ Failed to load NFTs');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  
   return (
     <>
     <div className='auction-container'>
         <h1>Deeds</h1>
+        <h2>{status}</h2>
         <div className='mint-button-container'>
             <h2>Add an NFT 😎</h2>
             <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '75px'}}>
-              <form class="form">
-                <span class="input-span">
-                  <label for="name" class="label">Name</label>
+              <form className="form">
+                <span className="input-span">
+                  <label htmlFor="name" className="label">Name</label>
                   <input type="name" name="name" id="name"
                   onChange={(e) => setName(e.target.value)} value={name}
                 /></span>
-                <span class="input-span">
-                  <label for="description" class="label">Description</label>
+                <span className="input-span">
+                  <label htmlFor="description" className="label">Description</label>
                   <input type="description" name="description" id="description"
                   onChange={(e) => setDescription(e.target.value)} value={description}
                 /></span>
-                <span class="input-span">
-                  <label for="price" class="label">Price (ETH)</label>
+                <span className="input-span">
+                  <label htmlFor="price" className="label">Price (ETH)</label>
                   <input type="number" name="price" id="price"
                   onChange={(e) => setPrice(e.target.value)} value={price}
                 /></span>
+                <span className="input-span">
+                  <label htmlFor="image" className="label">Image</label>
+                  <input type="file" name="image" id="image" onChange={OnChangeFile}/>
+                </span>
               </form>
-              <MintButton onClick={handleMint}/>
+              <MintButton onClick={listNFT}/>
             </div>
         </div>
         <h2>My Deeds</h2>
-        <div className='card-container'>
-          <DeedCard />
-          <DeedCard />
-          <DeedCard />
-          <DeedCard />
+        <h2>{deedsStatus}</h2>
+            <div className="flex mt-5 justify-between flex-wrap max-w-screen-xl text-center">
+            <div>
+                {deedStatus && <p>{deedStatus}</p>}
+
+                {data.length === 0 ? (
+                  <p>No NFTs found.</p>
+                ) : (
+                  <div className="nft-list">
+                    {data.map((item) => (
+                      <div className="nft-card" key={item.tokenId}>
+                        <img src={item.image} alt={item.name} width={200} />
+
+                        <h2>{item.name}</h2>
+                        <p>{item.description}</p>
+
+                        <p>
+                          <strong>Owner:</strong> {item.owner}
+                        </p>
+                        <p>
+                          <strong>Seller:</strong> {item.seller}
+                        </p>
+                        <p>
+                          <strong>Price:</strong> {item.price} ETH
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
         </div>
         
-      </div>
     </>
   )
 }

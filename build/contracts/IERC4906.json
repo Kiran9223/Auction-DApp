@@ -333,7 +333,7 @@
     "absolutePath": "@openzeppelin/contracts/interfaces/IERC4906.sol",
     "exportedSymbols": {
       "IERC165": [
-        1896
+        2355
       ],
       "IERC4906": [
         24
@@ -392,7 +392,7 @@
                 "248:7:1"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 1896,
+              "referencedDeclaration": 2355,
               "src": "248:7:1"
             },
             "id": 9,
@@ -429,7 +429,7 @@
         "linearizedBaseContracts": [
           24,
           1070,
-          1896
+          2355
         ],
         "name": "IERC4906",
         "nameLocation": "236:8:1",
@@ -577,7 +577,7 @@
   },
   "networks": {},
   "schemaVersion": "3.4.16",
-  "updatedAt": "2025-04-14T19:09:46.394Z",
+  "updatedAt": "2025-04-18T21:17:51.262Z",
   "devdoc": {
     "events": {
       "Approval(address,address,uint256)": {
