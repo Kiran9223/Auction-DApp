@@ -14,7 +14,7 @@ const AuctionCard = () => {
         </div>
         <div className="card__content-body">\
           <img src={car}/>
-          <p>Current Bid</p>
+          <p>Coming Soon...</p>
         </div>
         <div className="card__content-footer">
           <button className='participate-btn' onClick={() => setIsOpen(true)}>Participate</button>

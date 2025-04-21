@@ -78,6 +78,14 @@ const Deeds = () => {
     e.preventDefault();
 
     try {
+      if(!name || !description || !price || !fileURL) {
+        alert("Please fill all the fields!");
+        return;
+      }
+      if(price <= 0) {
+        alert("Price should be greater than 0!");
+        return;
+      }
       const metadataURL = await uploadMetaDataToIPFS();
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
@@ -132,6 +140,7 @@ const Deeds = () => {
       setDeedStatus('⏳ Requesting wallet access...');
       // 1. connect to MetaMask
       const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
       await provider.send('eth_requestAccounts', []);
 
       setDeedStatus('⏳ Fetching NFTs from contract…');
@@ -139,11 +148,11 @@ const Deeds = () => {
       const contract = new ethers.Contract(
         CONTRACT_ADDRESS,
         NFTAuction.abi,
-        provider
+        signer
       );
 
       // 3. call your read-only getter
-      const raw = await contract.getAllNFTs();
+      const raw = await contract.getMyNFTs();
 
       // 4. hydrate each NFT
       const items = await Promise.all(
@@ -189,26 +198,30 @@ const Deeds = () => {
                   <label htmlFor="name" className="label">Name</label>
                   <input type="name" name="name" id="name"
                   onChange={(e) => setName(e.target.value)} value={name}
+                  required
                 /></span>
                 <span className="input-span">
                   <label htmlFor="description" className="label">Description</label>
                   <input type="description" name="description" id="description"
                   onChange={(e) => setDescription(e.target.value)} value={description}
+                  required
                 /></span>
                 <span className="input-span">
                   <label htmlFor="price" className="label">Price (ETH)</label>
                   <input type="number" name="price" id="price"
                   onChange={(e) => setPrice(e.target.value)} value={price}
+                  required
                 /></span>
                 <span className="input-span">
                   <label htmlFor="image" className="label">Image</label>
-                  <input type="file" name="image" id="image" onChange={OnChangeFile}/>
+                  <input type="file" name="image" id="image" onChange={OnChangeFile} required/>
                 </span>
               </form>
               <MintButton onClick={listNFT}/>
             </div>
         </div>
         <h2>My Deeds</h2>
+        <button onClick={fetchAllNFTs} className="refresh-button">Refresh</button>
         <h2>{deedsStatus}</h2>
             <div className="flex mt-5 justify-between flex-wrap max-w-screen-xl text-center">
             <div>
@@ -220,7 +233,7 @@ const Deeds = () => {
                   <div className="nft-list">
                     {data.map((item) => (
                       <div className="nft-card" key={item.tokenId}>
-                        <img src={item.image} alt={item.name} width={200} />
+                        <img src={item.image} alt={item.name} style={{width:'200px', height:'200px', objectFit:'contain'}} />
 
                         <h2>{item.name}</h2>
                         <p>{item.description}</p>

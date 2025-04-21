@@ -126,7 +126,7 @@ export default function Profile() {
       const contract = new ethers.Contract(
         '0xd1bF6953902ace77499664afc835bAE90e21Ee37',
         NFTAuction.abi,
-        provider
+        signer
       );
 
       // 3) fetch user’s NFTs
@@ -144,11 +144,11 @@ export default function Profile() {
 
           return {
             price,
-            tokenId: i.tokenId.toNumber(),
-            seller:  i.seller,
-            owner:   i.owner,
-            image:   meta.image,
-            name:    meta.name,
+            tokenId: i.tokenId.toString(),
+            seller: i.seller,
+            owner: i.owner,
+            image: meta.image,
+            name: meta.name,
             description: meta.description,
           };
         })
@@ -174,7 +174,7 @@ export default function Profile() {
         <div className="nft-list">
           {data.map((item) => (
             <div className="nft-card" key={item.tokenId}>
-              <img src={item.image} alt={item.name} width={200} />
+              <img src={item.image} alt={item.name} style={{width:'200px', height:'200px', objectFit:'contain'}}/>
               <h3>{item.name}</h3>
               <p>{item.description}</p>
               <p><strong>Owner:</strong> {item.owner}</p>
