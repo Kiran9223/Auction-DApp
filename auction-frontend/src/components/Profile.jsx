@@ -127,7 +127,7 @@ export default function Profile() {
       const contract = new ethers.Contract(
         '0xd1bF6953902ace77499664afc835bAE90e21Ee37',
         NFTAuction.abi,
-        provider
+        signer
       );
 
       // 3) fetch user’s NFTs
@@ -145,11 +145,11 @@ export default function Profile() {
 
           return {
             price,
-            tokenId: i.tokenId.toNumber(),
-            seller:  i.seller,
-            owner:   i.owner,
-            image:   meta.image,
-            name:    meta.name,
+            tokenId: i.tokenId.toString(),
+            seller: i.seller,
+            owner: i.owner,
+            image: meta.image,
+            name: meta.name,
             description: meta.description,
           };
         })
