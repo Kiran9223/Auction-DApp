@@ -1,6 +1,6 @@
 import NFTAuction from "../abis/NFTAuction.json";
 import { BrowserProvider, Contract, parseEther, formatEther } from "ethers";
-import { CONTRACT_ADDRESS } from "../utils/constants.js";
+//import { CONTRACT_ADDRESS } from "../utils/constants.js";
 
 let provider;
 let signer;
