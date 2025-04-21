@@ -19,6 +19,10 @@
 
 * {
   box-sizing: border-box;
+  font-family: 'Orbitron', sans-serif;
+}
+body, html {
+  font-family: 'Orbitron', sans-serif;
 }
 
 ::-webkit-scrollbar {

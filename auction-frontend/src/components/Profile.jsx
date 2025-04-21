@@ -98,6 +98,7 @@ import { ethers } from 'ethers';
 import axios from 'axios';
 import NFTAuction from '../abis/NFTAuction.json';
 import { getProvider } from '../services/blockchainService';
+import './styles/Profile.css';
 
 const GetIpfsUrlFromPinata = (pinataUrl) => {
   const parts = pinataUrl.split('/');
@@ -162,23 +163,28 @@ export default function Profile() {
   }
 
   return (
-    <div>
-      <h2>Wallet Address: {addr || 'Not connected'}</h2>
-      <h2>No. of NFTs: {data.length}</h2>
-      <h2>Total Value: {totalPrice} ETH</h2>
+    <div className="profile-container">
+      <h1 className="profile-heading">Profile</h1>
+      <div className="profile-stats">
+        <p><strong>Wallet Address:</strong> {addr || 'Not connected'}</p>
+        <p><strong>No. of NFTs:</strong> {data.length}</p>
+        <p><strong>Total Value:</strong> {totalPrice} ETH</p>
+      </div>
 
-      <h2>My NFTs</h2>
+      <h2 className="profile-subheading">My NFTs</h2>
       {data.length === 0 ? (
-        <p>No NFTs found.</p>
+        <p className="no-nfts">No NFTs found.</p>
       ) : (
-        <div className="nft-list">
+        <div className="nft-grid">
           {data.map((item) => (
             <div className="nft-card" key={item.tokenId}>
-              <img src={item.image} alt={item.name} style={{width:'200px', height:'200px', objectFit:'contain'}}/>
-              <h3>{item.name}</h3>
-              <p>{item.description}</p>
-              <p><strong>Owner:</strong> {item.owner}</p>
-              <p><strong>Price:</strong> {item.price} ETH</p>
+              <img src={item.image} alt={item.name} />
+              <div className="nft-info">
+                <h3>{item.name}</h3>
+                <p>{item.description}</p>
+                <p><strong>Owner:</strong> {item.owner}</p>
+                <p><strong>Price:</strong> {item.price} ETH</p>
+              </div>
             </div>
           ))}
         </div>
