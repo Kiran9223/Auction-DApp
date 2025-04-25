@@ -1,5 +1,4 @@
-import React, { use } from 'react'
-import DeedCard from './DeedCard'
+import React from 'react'
 import MintButton from './MintButton'
 import './styles/Deeds.css'
 import { useState, useEffect } from 'react';
@@ -23,12 +22,7 @@ const Deeds = () => {
   const [status, setStatus] = useState('')
   const [fileURL, setFileURL] = useState(null)
   const [deedsStatus, setDeedsStatus] = useState('No deeds yet')
-  const [deeds, setDeeds] = useState([])
 
-
-  async function handleMint(){
-
-  }
 
   async function OnChangeFile(e) {
     var file = e.target.files[0];
@@ -97,7 +91,7 @@ const Deeds = () => {
       setStatus("Please while... Uploading(may take up to 5 mins) NFT to IPFS...");
 
       let contract = new ethers.Contract(
-        "0xd1bF6953902ace77499664afc835bAE90e21Ee37",
+        NFTAuction.networks[5777].address,
         NFTAuction.abi,
         signer
       );
@@ -129,7 +123,6 @@ const Deeds = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deedStatus, setDeedStatus] = useState('');
-  const CONTRACT_ADDRESS = '0xd1bF6953902ace77499664afc835bAE90e21Ee37';
   useEffect(() => {
     // run once on mount
     fetchAllNFTs();
@@ -146,7 +139,7 @@ const Deeds = () => {
       setDeedStatus('⏳ Fetching NFTs from contract…');
       // 2. instantiate contract with a provider (for read-only calls)
       const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
+        NFTAuction.networks[5777].address,
         NFTAuction.abi,
         signer
       );
