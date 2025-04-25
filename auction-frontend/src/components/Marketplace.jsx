@@ -18,9 +18,7 @@ export const Marketplace = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [deedStatus, setDeedStatus] = useState('');
-    const CONTRACT_ADDRESS = '0xd1bF6953902ace77499664afc835bAE90e21Ee37';
     const [currAddress, updateCurrAddress] = useState("0x");
-    const [buttonName, setButtonName] = useState("Buy Now");
     const [buyMessage, updateMessage] = useState("");
 
     useEffect(() => {
@@ -40,8 +38,9 @@ export const Marketplace = () => {
         setDeedStatus('⏳ Fetching NFTs from contract…');
         // 2. instantiate contract with a provider (for read-only calls)
         const contract = new ethers.Contract(
-          CONTRACT_ADDRESS,
-          NFTAuction.abi,
+        //   CONTRACT_ADDRESS,
+        NFTAuction.networks[5777].address,  
+        NFTAuction.abi,
           signer
         );
   
@@ -91,7 +90,7 @@ export const Marketplace = () => {
             // await provider.send('eth_requestAccounts', []);
     
             //Pull the deployed contract instance
-            let contract = new ethers.Contract(CONTRACT_ADDRESS, NFTAuction.abi, signer);
+            let contract = new ethers.Contract(NFTAuction.networks[5777].address, NFTAuction.abi, signer);
             const salePrice = ethers.parseUnits(price, 'ether');
             updateMessage("Buying the NFT... Please Wait")
             //run the executeSale function
@@ -139,7 +138,7 @@ export const Marketplace = () => {
                         {currAddress === item.seller ? (
                           <p>You are the owner</p>
                         ) : (
-                          <button className="btn" onClick={() => buyNFT(item.tokenId, item.price)}>{buttonName}</button>
+                          <button className="btn" onClick={() => buyNFT(item.tokenId, item.price)}>Buy Now</button>
                         )}
                       </div>
                     ))}
