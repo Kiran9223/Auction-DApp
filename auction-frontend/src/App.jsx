@@ -7,6 +7,7 @@ import Profile from './components/Profile';
 import { Route, Routes } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { requestAccount } from './services/blockchainService';
+import { Marketplace } from './components/Marketplace';
 
 const App = () => {
   const [account, setAccount] = useState(null);
@@ -44,8 +45,8 @@ const App = () => {
     <>
       <NavBar account={currAddress}/>
       {/* <div>{metaMaskConnectionStatus}</div> */}
-      <Routes>
-        <Route path="/" element={<Auctions />} />
+      <Routes> 
+        <Route path="/" element={<Marketplace />} />
         <Route path="/auction" element={<Auctions />} />
         <Route path="/deed" element={<Deeds />} />
         <Route path="/profile" element={<Profile />} />
