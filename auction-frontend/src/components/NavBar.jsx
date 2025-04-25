@@ -8,6 +8,7 @@ const NavBar = ({account}) => {
     <nav className='nav'>
         <Link to="/" className='site-title'>Auction DApp</Link>
         <ul>
+            <CustomLink to="/">Marketplace</CustomLink>
             <CustomLink to="/auction">Auctions</CustomLink>
             <CustomLink to="/deed">Deeds</CustomLink>
             <CustomLink to="/profile">Profile</CustomLink>

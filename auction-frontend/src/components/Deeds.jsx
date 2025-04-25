@@ -232,7 +232,7 @@ const Deeds = () => {
           {deedStatus && <p className="error">❌ {deedStatus}</p>}
           {data.length === 0 && !loading && <p className="subtext">No NFTs found.</p>}
 
-//         <div className='mint-button-container'>
+{/* //         <div className='mint-button-container'>
 //             <h2>Add an NFT 😎</h2>
 //             <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '75px'}}>
 //               <form className="form">
@@ -262,7 +262,7 @@ const Deeds = () => {
 //               <MintButton onClick={listNFT}/>
 //             </div>
 //         </div>
-//         <h2>My Deeds</h2>
+//         <h2>My Deeds</h2> */}
         <button onClick={fetchAllNFTs} className="refresh-button">Refresh</button>
         <h2>{deedsStatus}</h2>
             <div className="flex mt-5 justify-between flex-wrap max-w-screen-xl text-center">
