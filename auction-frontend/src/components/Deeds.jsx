@@ -181,7 +181,7 @@ const Deeds = () => {
   return (
     <>
       <div className='auction-container'>
-        <h1>Deeds</h1>
+        <h1>Mint a Deed</h1>
         <h2>{status}</h2>
   
         <div className="mint-section">
@@ -220,44 +220,11 @@ const Deeds = () => {
         {/* 📌 Status Section */}
         <div className="status-section">
           <h2>My Deeds</h2>
-          <h2>{deedsStatus}</h2>
-  
           {deedStatus && <p className="error">❌ {deedStatus}</p>}
-          {data.length === 0 && !loading && <p className="subtext">No NFTs found.</p>}
+          {data.length === 0 && !loading && <p className="subtext">No Deeds yet.</p>}
 
-{/* //         <div className='mint-button-container'>
-//             <h2>Add an NFT 😎</h2>
-//             <div style={{display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '75px'}}>
-//               <form className="form">
-//                 <span className="input-span">
-//                   <label htmlFor="name" className="label">Name</label>
-//                   <input type="name" name="name" id="name"
-//                   onChange={(e) => setName(e.target.value)} value={name}
-//                   required
-//                 /></span>
-//                 <span className="input-span">
-//                   <label htmlFor="description" className="label">Description</label>
-//                   <input type="description" name="description" id="description"
-//                   onChange={(e) => setDescription(e.target.value)} value={description}
-//                   required
-//                 /></span>
-//                 <span className="input-span">
-//                   <label htmlFor="price" className="label">Price (ETH)</label>
-//                   <input type="number" name="price" id="price"
-//                   onChange={(e) => setPrice(e.target.value)} value={price}
-//                   required
-//                 /></span>
-//                 <span className="input-span">
-//                   <label htmlFor="image" className="label">Image</label>
-//                   <input type="file" name="image" id="image" onChange={OnChangeFile} required/>
-//                 </span>
-//               </form>
-//               <MintButton onClick={listNFT}/>
-//             </div>
-//         </div>
-//         <h2>My Deeds</h2> */}
-        <button onClick={fetchAllNFTs} className="refresh-button">Refresh</button>
-        <h2>{deedsStatus}</h2>
+        {/* <button onClick={fetchAllNFTs} className="refresh-button">Refresh</button> */}
+        {/* <h2>{deedsStatus}</h2> */}
             <div className="flex mt-5 justify-between flex-wrap max-w-screen-xl text-center">
             <div>
                 {deedStatus && <p>{deedStatus}</p>}
