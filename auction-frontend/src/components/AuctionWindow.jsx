@@ -1,14 +1,30 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import './styles/AuctionWindow.css';
 import BidForm from './BidForm';
 import car from '../assets/car1.png'; // make sure this is a valid path
 
-const AuctionWindow = ({ open, OnClose }) => {
-  if (!open) return null;
+const AuctionWindow = ({ open, OnClose, deedData }) => {
+  if (!open || !deedData) return null;
 
-  const [highestBid, setHighestBid] = React.useState(1.5);
-  const [startingBid] = React.useState(1);
-  const [timeRemaining] = React.useState("02:30");
+  const { name, image, price } = deedData;
+
+  const [highestBid, setHighestBid] = React.useState(0);
+  const [startingBid] = React.useState(price);
+  const [timeRemaining, setTimeRemaining] = React.useState(60);
+
+  useEffect(() => {
+    if (timeRemaining <= 0) return;
+    const timer = setInterval(() => {
+      setTimeRemaining((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [timeRemaining]);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const secs = (seconds % 60).toString().padStart(2, '0');
+    return `${mins}:${secs}`;
+  };
 
   async function placeBid() {
     // your logic here
@@ -24,11 +40,11 @@ const AuctionWindow = ({ open, OnClose }) => {
         <div className="auction-info-bar">
           <p><strong>Starting Bid:</strong> {startingBid} ETH</p>
           <p><strong>Current Bid:</strong> {highestBid} ETH</p>
-          <p><strong>Time Remaining:</strong> {timeRemaining}</p>
+          <p><strong>Time Remaining:</strong> {formatTime(timeRemaining)}</p>
         </div>
 
-        <h2 className="item-title">Car</h2>
-        <img src={car} alt="Car" className="auction-image" />
+        <h2 className="item-title">{name}</h2>
+        <img src={image} alt={name} className="auction-image" />
 
         <div className="auction-price-list">
           {/* future: bidding history */}
