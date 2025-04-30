@@ -113,6 +113,9 @@ contract NFTAuction is ERC721URIStorage{
         {
             currentId = i + 1;
             ListedToken storage currentItem = idToListedToken[currentId];
+            if(currentItem.currentlyListed == false) {
+                continue;
+            }
             tokens[currentIndex] = currentItem;
             currentIndex += 1;
         }
@@ -153,7 +156,7 @@ contract NFTAuction is ERC721URIStorage{
         require(msg.value == price, "Please submit the asking price in order to complete the purchase");
 
         //update the details of the token
-        idToListedToken[tokenId].currentlyListed = true;
+        idToListedToken[tokenId].currentlyListed = false;
         idToListedToken[tokenId].seller = payable(msg.sender);
         _itemsSold.increment();
 

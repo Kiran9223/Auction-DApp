@@ -38,39 +38,46 @@ export const Marketplace = () => {
         setDeedStatus('⏳ Fetching NFTs from contract…');
         // 2. instantiate contract with a provider (for read-only calls)
         const contract = new ethers.Contract(
-        //   CONTRACT_ADDRESS,
         NFTAuction.networks[5777].address,  
         NFTAuction.abi,
           signer
         );
   
-        // 3. call your read-only getter
-        const raw = await contract.getAllNFTs();
-  
-        // 4. hydrate each NFT
+        // 3. call your read-only getter to fetch all NFTs
+        const rawTokens = await contract.getAllNFTs();
+        
+        // 4. hydrate each valid NFT
         const items = await Promise.all(
-          raw.map(async (i) => {
-            // pull tokenURI, convert to HTTP URL, fetch metadata
-            const uri = GetIpfsUrlFromPinata(await contract.tokenURI(i.tokenId));
-            const { data: meta } = await axios.get(uri);
-  
-            return {
-              tokenId: i.tokenId.toString(),  // BigInt → string
-              seller: i.seller,
-              owner: i.owner,
-              price: ethers.formatEther(i.price), // BigNumber → string ETH
-              image: meta.image,
-              name:  meta.name,
-              description: meta.description,
-            };
-          })
+          rawTokens
+            .filter(i => i.currentlyListed) // Only process tokens that are currently listed
+            .map(async (i) => {
+              try {
+                // pull tokenURI, convert to HTTP URL, fetch metadata
+                const tokenId = i.tokenId.toString();
+                const uri = GetIpfsUrlFromPinata(await contract.tokenURI(tokenId));
+                const { data: meta } = await axios.get(uri);
+    
+                return {
+                  tokenId: tokenId,
+                  seller: i.seller,
+                  owner: i.owner,
+                  price: ethers.formatEther(i.price), // BigNumber → string ETH
+                  image: meta.image,
+                  name: meta.name,
+                  description: meta.description,
+                };
+              } catch (err) {
+                console.error(`Error processing token ${i.tokenId}: ${err.message}`);
+                return null; // Return null for failed tokens
+              }
+            })
         );
   
-        // 5. store in state
-        setData(items);
+        // 5. filter out nulls and store in state
+        setData(items.filter(item => item !== null));
         setDeedStatus('');
       } catch (err) {
-        console.error(err);
+        console.error('Failed to load NFTs:', err);
         setDeedStatus('❌ Failed to load NFTs');
       } finally {
         setLoading(false);
@@ -80,43 +87,45 @@ export const Marketplace = () => {
     //Buy NFT function
     async function buyNFT(tokenId, price) {
         try {
-            // const ethers = require("ethers");
-            // //After adding your Hardhat network to your metamask, this code will get providers and signers
-            // const provider = new ethers.providers.Web3Provider(window.ethereum);
-            // const signer = provider.getSigner();
+            updateMessage("Buying the NFT... Please Wait");
 
             const provider = new ethers.BrowserProvider(window.ethereum);
             const signer = await provider.getSigner();
-            // await provider.send('eth_requestAccounts', []);
     
-            //Pull the deployed contract instance
+            // Pull the deployed contract instance
             let contract = new ethers.Contract(NFTAuction.networks[5777].address, NFTAuction.abi, signer);
             const salePrice = ethers.parseUnits(price, 'ether');
-            updateMessage("Buying the NFT... Please Wait")
-            //run the executeSale function
-            let transaction = await contract.executeSale(tokenId, {value:salePrice});
+            
+            // Run the executeSale function
+            let transaction = await contract.executeSale(tokenId, {value: salePrice});
             await transaction.wait();
     
             alert('You successfully bought the NFT!');
             updateMessage("");
+            
+            // Refresh the NFT list to show the updated ownership
+            fetchAllNFTs();
         }
         catch(e) {
-            alert("Upload Error"+e)
+            console.error("Error buying NFT:", e);
+            alert("Error buying NFT: " + e.message);
+            updateMessage("");
         }
-
     }
   
   return (
     <>
-        {/* <button onClick={fetchAllNFTs} className="refresh-button">Refresh</button> */}
+        <button onClick={fetchAllNFTs} className="refresh-button">Refresh</button>
         <h2>{deedStatus}</h2>
         <h2>{buyMessage}</h2>
             <div className="flex mt-5 justify-between flex-wrap max-w-screen-xl text-center">
             <div>
                 {deedStatus && <p>{deedStatus}</p>}
 
-                {data.length === 0 ? (
-                  <p>No NFTs found.</p>
+                {loading ? (
+                  <p>Loading NFTs...</p>
+                ) : data.length === 0 ? (
+                  <p>No NFTs found. Try minting some first!</p>
                 ) : (
                   <div className="nft-list">
                     {data.map((item) => (
@@ -133,10 +142,10 @@ export const Marketplace = () => {
                           <strong>Seller:</strong> {item.seller}
                         </p>
                         <p>
-                          <strong>Price:</strong> {item.price} ETH
+                          <strong>Price:</strong> {item.price} ETH
                         </p>
-                        {currAddress === item.seller ? (
-                          <p>You are the owner</p>
+                        {currAddress.toLowerCase() === item.seller.toLowerCase() ? (
+                          <p>You are the seller</p>
                         ) : (
                           <button className="btn" onClick={() => buyNFT(item.tokenId, item.price)}>Buy Now</button>
                         )}
