@@ -7,24 +7,35 @@ import './styles/BidForm.css'
 
 const BidForm = ({onClick}) => {
 
-  const [bidAmount, setBidAmount] = React.useState(0);
+  const [bidAmount, setBidAmount] = React.useState('');
 
-  // async function placeBid() {
-  //   const accounts = await myContract.methods;
-  //   console.log("Accounts: ", accounts);
-  //   console.log("Bid Amount: ", bidAmount);
-  //   const result = await myContract.methods.placeBid().send({from: accounts[0], value: bidAmount});
-  //   console.log("Result: ", result);
-  // }
+  const handleSubmit = () => {
+    if (!bidAmount || parseFloat(bidAmount) <= 0) {
+      alert("Please enter a valid bid amount");
+      return;
+    }
+
+    onClick(bidAmount); 
+    setBidAmount(''); 
+  };
 
   return (
     <div>
-        <div class="subscribe">
-            <p>Place your bid</p>
-            <input placeholder="ETH" class="subscribe-input" name="eth" type="number"  onChange={(e) => {setBidAmount(e.target.value)}}/>
-            <br/>
-            <div class="submit-btn" >SUBMIT</div>
+      <div className="subscribe">
+        <p>Place your bid</p>
+        <input 
+          placeholder="ETH" 
+          className="subscribe-input" 
+          name="eth" 
+          type="number" 
+          value={bidAmount}
+          onChange={(e) => setBidAmount(e.target.value)}
+        />
+        <br/>
+        <div className="submit-btn" onClick={handleSubmit}>
+          SUBMIT
         </div>
+      </div>
     </div>
   )
 }

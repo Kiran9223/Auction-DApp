@@ -74,5 +74,26 @@
   border-radius: 4px;
 }
 
+.card__content-footer input[type="text"],
+.card__content-footer input[type="number"] {
+  width: 100%;
+  padding: 0.4rem;
+  margin: 0.3rem 0;
+  border-radius: 0.3rem;
+  border: 1px solid gray;
+  background-color: white !important;  
+  color: black !important;           
+  font-size: 0.85rem;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.card__content-footer input[type="text"]:focus,
+.card__content-footer input[type="number"]:focus {
+  border-color: blueviolet;
+  box-shadow: 0 0 5px rgba(137, 43, 226, 0.5);
+}
+
+
 
  

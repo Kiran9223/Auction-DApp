@@ -11,7 +11,7 @@ const Auctions = () => {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
-      const contractAddress = NFTAuction.networks["5777"].address; // ✅ get it from json dynamically
+      const contractAddress = NFTAuction.networks["5777"].address;
       const contract = new ethers.Contract(contractAddress, NFTAuction.abi, signer);
 
       const rawDeeds = await contract.getMyNFTs();
@@ -46,10 +46,17 @@ const Auctions = () => {
   const upcomingDeeds = deeds.filter(deed => deed.auctionStatus === "upcoming");
   const ongoingDeeds = deeds.filter(deed => deed.auctionStatus === "ongoing");
 
-  const startAuction = (tokenId) => {
-    setDeeds(prevDeeds => 
-      prevDeeds.map(deed => 
-        deed.tokenId === tokenId ? { ...deed, auctionStatus: "ongoing" } : deed
+  const startAuction = (tokenId, startingPriceInput, timerInput) => {
+    setDeeds(prevDeeds =>
+      prevDeeds.map(deed =>
+        deed.tokenId === tokenId
+          ? {
+              ...deed,
+              auctionStatus: "ongoing",
+              startingPrice: startingPriceInput,
+              timer: timerInput
+            }
+          : deed
       )
     );
   };
@@ -59,19 +66,21 @@ const Auctions = () => {
       <div className='auction-container'>
         <h1>Upcoming Auctions</h1> 
         <div className='card-container'>
-        {deeds.length === 0 ? (
+        {upcomingDeeds.length === 0 ? (
             <p>No upcoming auctions found.</p>
           ) : (
-            deeds.map((deed) => (
+            upcomingDeeds.map((deed) => (
               <AuctionCard 
-                key={deed.tokenId}
-                name={deed.name}
-                description={deed.description}
-                image={deed.image}
-                price={deed.price}
-                tokenId={deed.tokenId}
-                buttonType="start"           
-                onButtonClick={() => startAuction(deed.tokenId)}
+              key={deed.tokenId}
+              name={deed.name}
+              description={deed.description}
+              image={deed.image}
+              price={deed.price}
+              tokenId={deed.tokenId}
+              buttonType="start"
+              onButtonClick={(tokenId, startingPriceInput, timerInput) =>
+                startAuction(tokenId, startingPriceInput, timerInput)
+              }
               />
             ))
           )}
@@ -89,8 +98,10 @@ const Auctions = () => {
                 name={deed.name}
                 description={deed.description}
                 image={deed.image}
-                price={deed.price}
+                price={deed.startingPrice}
+                startingPrice={deed.startingPrice}
                 tokenId={deed.tokenId}
+                timer={deed.timer}
                 buttonType="participate"
               /> 
             ))
