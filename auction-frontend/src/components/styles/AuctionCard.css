@@ -1,468 +1,198 @@
-/* .card {
-  width: 220px;
-  min-height: 380px;
-  background: rgb(255, 255, 255);
-  padding: 1rem;
-  border-bottom: 2px solid blueviolet;
-  border-right: 2px solid blueviolet;
-  border-top: 2px solid white;
-  border-left: 2px solid white;
-  border-radius: 8px;
-  transition-duration: 0.5s;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
- 
- .card:hover {
-  border-top: 2px solid blueviolet;
-  border-left: 2px solid blueviolet;
-  border-bottom: 2px solid rgb(251, 255, 0);
-  border-right: 2px solid rgb(251, 255, 0);
-  box-shadow: rgba(237, 240, 46, 0.4) 5px 5px, rgba(240, 217, 46, 0.3) 10px 10px, rgba(240, 240, 46, 0.2) 15px 15px, rgba(240, 227, 46, 0.1) 20px 20px, rgba(240, 217, 46, 0.05) 25px 25px;
- }
- 
- .card__content {
-  font-size: small;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
- }
- 
- .card__content-heading {
-  color: blueviolet;
-  font-weight: bold;
- }
- 
- .card__content-body p {
-  color: rgb(118, 104, 128);
-  margin-top: 0.5rem;
-  font-size: 0.9rem; 
-}
- 
- .card__content-footer .participate-btn {
-  background-color: rgb(255, 255, 255);
-  color: grey;
-  font-weight: 700;
-  border-radius: .2rem;
-  border: 1px solid grey;
-  padding: .5rem;
-  margin: 1rem;
-  transition-duration: 1s;
-  transition-property: background-color, color, border;
- }
- 
- .participate-btn:hover {
-  color: black;
-  background-color: rgb(255, 251, 0);
-  border: 1px solid rgb(0, 0, 0);
-  box-shadow: rgba(136, 0, 255, 0.27) 0px 0px 0.25em, rgba(136, 0, 255, 0.27) 0px 0.25em 1em;
- }
-
- .card img {
-  width: 100%;
-  height: 180px;
-  object-fit: contain;
-  border-radius: 0.2rem;
-}
-
-.card__content-body img {
-  width: 100%;
-  height: 150px;
-  object-fit: contain;
-  border-radius: 4px;
-} */
-
-
- 
-/* ************************** */
-
-/* Add to your existing CSS file or create a new one */
-
-/* .auction-container {
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.auction-container h1 {
-  font-size: 24px;
-  margin-bottom: 20px;
-  color: #333;
-  border-bottom: 1px solid #eaeaea;
-  padding-bottom: 10px;
-}
+/* === Card Container Layout === */
 
 .card-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  justify-items: center;
+  padding: 20px 0;
 }
 
-.auction-card {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.auction-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-}
-
-.auction-image {
-  height: 200px;
-  overflow: hidden;
-}
-
-.auction-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.auction-details {
-  padding: 15px;
-}
-
-.auction-details h2 {
-  font-size: 18px;
-  margin: 0 0 10px;
-  color: #333;
-}
-
-.auction-details p {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 15px;
-  max-height: 60px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.auction-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 15px;
-  font-size: 14px;
-}
-
-.auction-price {
-  font-weight: bold;
-  color: #2c3e50;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.total-bids {
-  font-size: 12px;
-  color: #7f8c8d;
-}
-
-.auction-timer {
-  font-weight: bold;
-  color: #e74c3c;
-}
-
-.auction-id {
-  font-size: 12px;
-  color: #95a5a6;
-}
-
-.auction-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.form-group label {
-  font-size: 12px;
-  color: #7f8c8d;
-}
-
-.form-group input, 
-.form-group select {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-}
-
-button {
-  padding: 10px;
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.start-button {
-  background-color: #3498db;
-  color: white;
-}
-
-.start-button:hover {
-  background-color: #2980b9;
-}
-
-.bid-button {
-  background-color: #2ecc71;
-  color: white;
-}
-
-.bid-button:hover {
-  background-color: #27ae60;
-}
-
-.claim-button {
-  background-color: #f39c12;
-  color: white;
-}
-
-.claim-button:hover {
-  background-color: #e67e22;
-}
-
-.auction-status {
-  padding: 10px;
-  text-align: center;
-  font-weight: bold;
-  border-radius: 4px;
-  background-color: #ecf0f1;
-  color: #7f8c8d;
-}
-
-.winner {
-  background-color: #d5f5e3;
-  color: #27ae60;
-}
-
-.winner-info {
-  font-size: 12px;
-  color: #7f8c8d;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.auction-completed {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.final-price {
-  font-weight: bold;
-  font-size: 16px;
-  color: #2c3e50;
-  text-align: center;
-  padding: 10px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-}
-
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  font-size: 18px;
-  z-index: 1000;
-}
-
-.error-message {
-  background-color: #f8d7da;
-  color: #721c24;
-  padding: 10px 15px;
-  margin-bottom: 20px;
-  border-radius: 4px;
-  border: 1px solid #f5c6cb;
+.auction-container {
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto 20px;
-} */
+  margin: 0 auto;
+  padding: 40px 20px;
+}
 
-/* ********************************************** */
+.auction-container h1 {
+  font-size: 28px;
+  color: white;
+  margin-bottom: 25px;
+  border-bottom: 2px solid blueviolet;
+  padding-bottom: 8px;
+}
+
+
+/* === Universal Auction Card Style === */
 
 .auction-card {
-  background-color: white;
+  background-color: #0e0e0e;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 2px solid #444;
+  box-shadow: 0 0 15px rgba(138, 43, 226, 0.2);
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  width: 300px;
-  margin: 15px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+  width: 280px;
   display: flex;
   flex-direction: column;
+  color: white;
 }
 
 .auction-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 20px rgba(138, 43, 226, 0.4);
+  border-color: yellow;
 }
 
 .auction-card.participate {
-  border-left: 4px solid #3498db; /* Blue for active auctions */
+  border-left: 4px solid #3498db;
 }
 
 .auction-card.view {
-  border-left: 4px solid #8e44ad; /* Purple for past auctions */
+  border-left: 4px solid #8e44ad;
 }
+
+
+/* === Card Image === */
 
 .auction-card__image {
   height: 200px;
+  background-color: #222;
   overflow: hidden;
 }
 
 .auction-card__image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
+  object-fit: contain;
+  transition: transform 0.3s ease;
 }
 
 .auction-card__image img:hover {
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
+
+
+/* === Card Content === */
 
 .auction-card__content {
   padding: 16px;
-  flex-grow: 1;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
 }
 
 .auction-card__title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #333;
+  font-size: 20px;
+  color: blueviolet;
+  font-weight: bold;
+  margin-bottom: 6px;
 }
 
 .auction-card__description {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 10px;
-  flex-grow: 1;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 13px;
+  color: #aaa;
+  margin-bottom: 8px;
+  min-height: 32px;
 }
 
 .auction-card__token-id {
   font-size: 12px;
-  color: #888;
+  color: #666;
   margin-bottom: 12px;
 }
 
+
+/* === Auction Details (Bids, Price, Timer, etc) === */
+
 .auction-card__details {
-  margin-top: 10px;
-}
-
-.auction-info {
-  margin-bottom: 15px;
-  background-color: #f8f9fa;
-  padding: 10px;
+  background-color: #161616;
+  padding: 12px;
   border-radius: 8px;
+  margin-top: 12px;
 }
 
-.auction-info p {
-  margin: 5px 0;
+.auction-card__details p {
+  margin: 4px 0;
   font-size: 14px;
-  color: #444;
+  color: #ccc;
 }
 
 .auction-timer {
   color: #e74c3c;
-  font-weight: 500;
+  font-weight: bold;
 }
 
 .auction-status {
   padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
+  border-radius: 6px;
   text-align: center;
   margin-top: 10px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .auction-status.active {
-  background-color: #e3f2fd;
-  color: #2196f3;
+  background-color: #213b5e;
+  color: #4aa8ff;
 }
 
 .auction-status.completed {
-  background-color: #e8eaf6;
-  color: #3f51b5;
+  background-color: #2d2d2d;
+  color: #aaa;
 }
 
+
+/* === Form Controls === */
+
 .auction-card__form {
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .form-group label {
-  display: block;
-  font-size: 14px;
-  color: #555;
-  margin-bottom: 5px;
+  color: #888;
+  font-size: 13px;
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+  padding: 8px;
+  background-color: #202020;
+  border: 1px solid #333;
+  color: white;
+  border-radius: 6px;
 }
 
 .duration-display {
-  font-size: 12px;
-  color: #777;
-  margin-top: 5px;
+  margin-top: 4px;
+  color: #4a6bdf;
+  font-weight: bold;
 }
 
+
+/* === Buttons === */
+
 .auction-card__button {
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
   padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 600;
+  background-color: #6a0dad;
+  color: white;
+  border-radius: 6px;
+  border: none;
   cursor: pointer;
-  transition: background-color 0.2s ease;
   width: 100%;
   margin-top: 10px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
 }
 
 .auction-card__button:hover {
-  background-color: #2980b9;
+  background-color: #8e24aa;
 }
 
 .auction-card__button.claim {
@@ -470,80 +200,72 @@ button {
 }
 
 .auction-card__button.claim:hover {
-  background-color: #219653;
+  background-color: #2ecc71;
 }
+
+
+/* === Bid form === */
 
 .bid-form {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #333;
 }
 
-/* Loading and error states */
+
+/* === Loading / Error === */
+
 .loading-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
   color: white;
-  font-size: 18px;
-  z-index: 1000;
+  font-size: 20px;
+  z-index: 999;
 }
 
 .error-message {
   background-color: #ffebee;
   color: #c62828;
-  padding: 12px 20px;
-  border-radius: 4px;
+  padding: 10px 16px;
+  border-radius: 6px;
   margin: 20px auto;
   max-width: 600px;
+  border-left: 6px solid #d32f2f;
   text-align: center;
-  font-weight: 500;
-  border-left: 4px solid #d32f2f;
+  font-weight: bold;
 }
 
-/* Responsive adjustments */
+.card-container.upcoming {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  justify-items: center;
+  align-items: start;
+  padding: 20px 0;
+}
+
+.card-container.upcoming,
+.card-container.ongoing,
+.card-container.past {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  align-items: stretch;
+  padding: 20px 0;
+}
+
+/* === Responsive === */
+
 @media (max-width: 768px) {
   .auction-card {
     width: 100%;
-    margin: 10px 0;
-  }
-  
-  .card-container {
-    justify-content: center;
-  }
-}
-
-.duration-display {
-  font-weight: bold;
-  color: #4a6bdf;
-  margin-top: 5px;
-}
-
-select {
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-}
-
-.auction-timer {
-  font-size: 1.1em;
-  color: #e74c3c;
-  font-weight: bold;
-  transition: all 0.5s ease;
-}
-
-.auction-timer.blink {
-  animation: blink-animation 1s steps(2, start) infinite;
-}
-
-@keyframes blink-animation {
-  to {
-    visibility: hidden;
   }
 }

@@ -129,6 +129,9 @@ const AuctionCard = ({
     if (startAuction) {
       return (
         <div className="auction-card__form">
+          <p><strong>Price:</strong> {price} ETH</p>
+          <p><strong>Token ID:</strong> {tokenId}</p>
+          <p><strong>Description:</strong> {description}</p>
           <div className="form-group">
             <label>Starting Price (ETH):</label>
             <input
@@ -172,7 +175,6 @@ const AuctionCard = ({
             <p><strong>Highest bidder:</strong> {winner ? `${winner.slice(0, 6)}...${winner.slice(-4)}` : 'No bids yet'}</p>
             <p><strong>Total bids:</strong> {totalBids || 0}</p>
           </div>
-          
           {timeLeft > 0 ? (
             <form className="bid-form" onSubmit={handleBid}>
               <div className="form-group">

@@ -22,6 +22,7 @@
     "metamask-react": "^2.7.0",
     "nft.storage": "^7.2.0",
     "react": "^19.0.0",
+    "react-canvas-confetti": "^2.0.7",
     "react-dom": "^19.0.0",
     "react-hooks-global-state": "^2.1.0",
     "react-icons": "^5.5.0",
