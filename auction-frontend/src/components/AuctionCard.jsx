@@ -203,7 +203,7 @@ const AuctionCard = ({
             )
           )}
           
-          { !isWinner && (winner == "0x0000000000000000000000000000000000000000") && 
+          { timeLeft <= 0 && !isWinner && (winner == "0x0000000000000000000000000000000000000000") && 
             isAuctionCreator && (
               <button 
                 className="auction-card__button claim" 
