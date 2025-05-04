@@ -14,7 +14,7 @@ const initialize = async() => {
     console.log("Signer: ", signer);
     const accounts = await provider.send("eth_requestAccounts", []);
     console.log("Accounts: ", accounts);
-    auctionContract = new Contract("0xeB1a4cc89fF15aea8aCCe36462854f8A5a9461c6", NFTAuction.abi, signer);
+    auctionContract = new Contract(NFTAuction.networks[5777].address, NFTAuction.abi, signer);
   }else {
     console.log("Please install MetaMask");
   }

@@ -79,6 +79,7 @@ export const Marketplace = () => {
       } catch (err) {
         console.error('Failed to load NFTs:', err);
         setDeedStatus('❌ Failed to load NFTs');
+        setLoading(false);
       } finally {
         setLoading(false);
       }
@@ -96,9 +97,35 @@ export const Marketplace = () => {
             let contract = new ethers.Contract(NFTAuction.networks[5777].address, NFTAuction.abi, signer);
             const salePrice = ethers.parseUnits(price, 'ether');
             
+
+            console.log("Raw price from item:", price, typeof price);
+            console.log("Parsed price:", salePrice, typeof salePrice);
+
             // Run the executeSale function
             let transaction = await contract.executeSale(tokenId, {value: salePrice});
             await transaction.wait();
+
+            // try {
+            //   // 1) Simulate the call
+            //   await contract.executeSale.staticCall(tokenId, {value: salePrice});
+            // } catch (simErr) {
+            //   // callStatic will bubble up the actual `require(...)` message
+            //   console.error("callStatic error object:", simErr);
+
+            //   // ethers v6 puts the human‑readable reason in one of these…
+            //   const reason =
+            //     // this is set when you do `require(..., "Foo")`
+            //     simErr.reason
+            //     // v6 also surfaces a “shortMessage” containing that same text
+            //     ?? simErr.shortMessage
+            //     // some nodes drop both, but leave raw error data here
+            //     ?? simErr.data
+            //     // fallback to the generic JS error message
+            //     ?? simErr.message;
+
+            //   alert(`Cannot claim NFT: ${reason}`);
+            //   return;
+            // }
     
             alert('You successfully bought the NFT!');
             updateMessage("");
@@ -116,11 +143,11 @@ export const Marketplace = () => {
   return (
     <>
         <button onClick={fetchAllNFTs} className="refresh-button">Refresh</button>
-        <h2>{deedStatus}</h2>
+        {/* <h2>{deedStatus}</h2> */}
         <h2>{buyMessage}</h2>
             <div className="flex mt-5 justify-between flex-wrap max-w-screen-xl text-center">
             <div>
-                {deedStatus && <p>{deedStatus}</p>}
+                {/* {deedStatus && <p>{deedStatus}</p>} */}
 
                 {loading ? (
                   <p>Loading NFTs...</p>
