@@ -129,7 +129,11 @@ export default function Profile() {
       // }
 
       // // Call the listNFT function from the contract
-      const tx = await contract.listNFTAgain(tokenId, price);
+      const priceInEther = ethers.parseUnits(price, 'ether');
+      let listingPrice = await contract.getListPrice();
+      listingPrice = listingPrice.toString();
+
+      const tx = await contract.listNFTAgain(tokenId, priceInEther, { value: listingPrice });
       await tx.wait(); // Wait for the transaction to be mined
       alert('NFT listed successfully!');
       hideOfferButton(tokenId); // Hide the button after listing

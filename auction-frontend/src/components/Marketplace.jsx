@@ -101,13 +101,19 @@ export const Marketplace = () => {
             console.log("Raw price from item:", price, typeof price);
             console.log("Parsed price:", salePrice, typeof salePrice);
 
+            const listedToken = await contract.getListedTokenForId(tokenId);
+            console.log("Listed token:", listedToken);
+
             // Run the executeSale function
             let transaction = await contract.executeSale(tokenId, {value: salePrice});
             await transaction.wait();
 
+            // listing fee is 0.01 ETH
+            // const listingFee = ethers.parseUnits("0.01", 'ether');
+
             // try {
             //   // 1) Simulate the call
-            //   await contract.executeSale.staticCall(tokenId, {value: salePrice});
+            //   await contract.executeSale.staticCall(tokenId, {value: salePrice+listingFee});
             // } catch (simErr) {
             //   // callStatic will bubble up the actual `require(...)` message
             //   console.error("callStatic error object:", simErr);

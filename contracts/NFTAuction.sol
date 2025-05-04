@@ -222,16 +222,19 @@ contract NFTAuction is ERC721URIStorage {
     // }
 
     /// Owner calls this to re‑list their NFT at a new price
-    function listNFTAgain(uint256 tokenId, uint256 price) external {
+    function listNFTAgain(uint256 tokenId, uint256 price) external payable{
+        // Make sure the sender sent enough ETH to pay for listing
+        require(msg.value == listPrice, "Hopefully sending the correct price");
+
+        // Transfer the NFT into this contract
+        _transfer(msg.sender, address(this), tokenId);
+        
         // Update our on‑chain listing record
         idToListedToken[tokenId].tokenId = tokenId;
         idToListedToken[tokenId].price = price;
         idToListedToken[tokenId].currentlyListed = true;
         idToListedToken[tokenId].seller = payable(msg.sender);
         idToListedToken[tokenId].owner = payable(address(this));
-
-        // Transfer the NFT into this contract
-        _transfer(msg.sender, address(this), tokenId);
 
         // Allow the marketplace (this contract) to handle sales later
         // approve(address(this), tokenId);
