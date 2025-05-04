@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-contract NFTAuction is ERC721URIStorage{
+contract NFTAuction is ERC721URIStorage {
 
     using Counters for Counters.Counter;
     //_tokenIds variable has the most recent minted tokenId
@@ -124,7 +124,7 @@ contract NFTAuction is ERC721URIStorage{
     }
 
     //Returns all the NFTs that the current user is owner or seller in
-    function getMyNFTs() public view returns (ListedToken[] memory) {
+    function getMyNFTs(bool profile) public view returns (ListedToken[] memory) {
         uint totalItemCount = _tokenIds.current();
         uint itemCount = 0;
         uint currentIndex = 0;
@@ -143,6 +143,9 @@ contract NFTAuction is ERC721URIStorage{
             if(idToListedToken[i+1].owner == msg.sender || idToListedToken[i+1].seller == msg.sender) {
                 currentId = i+1;
                 ListedToken storage currentItem = idToListedToken[currentId];
+                if(!profile && currentItem.currentlyListed == false) {
+                    continue;
+                }
                 items[currentIndex] = currentItem;
                 currentIndex += 1;
             }
@@ -153,7 +156,7 @@ contract NFTAuction is ERC721URIStorage{
     function executeSale(uint256 tokenId) public payable {
         uint price = idToListedToken[tokenId].price;
         address seller = idToListedToken[tokenId].seller;
-        require(msg.value == price, "Please submit the asking price in order to complete the purchase");
+        // require(msg.value == price, "Please submit the asking price in order to complete the purchase");
 
         //update the details of the token
         idToListedToken[tokenId].currentlyListed = false;
@@ -171,8 +174,83 @@ contract NFTAuction is ERC721URIStorage{
         payable(seller).transfer(msg.value);
     }
 
+    // Function to allow other contracts (like our auction contract) to mark an NFT as no longer listed
+    function markTokenNotListed(uint256 tokenId, address auctionContractAddress) public {
+        require(idToListedToken[tokenId].currentlyListed, "Token is not listed");
+        require(
+            msg.sender == owner || 
+            idToListedToken[tokenId].seller == msg.sender ||
+            msg.sender == auctionContractAddress,
+            "Not authorized"
+        );
+        
+        idToListedToken[tokenId].currentlyListed = false;
+    }
+    
     //We might add a resell token function in the future
     //In that case, tokens won't be listed by default but users can send a request to actually list a token
     //Currently NFTs are listed by default
-    
+
+    function approveTokenForAuction(uint256 tokenId, address auctionContract) public {
+        require(idToListedToken[tokenId].seller == msg.sender || owner == msg.sender, "Not authorized");
+        _approve(auctionContract, tokenId);
+    }
+        
+    // get number of items minted
+    function getItemsMinted() public view returns (uint256) {
+        return _tokenIds.current();
+    }
+
+    // check whether the token is listed or not
+    function isTokenListed(uint256 tokenId) public view returns (bool) {
+        return idToListedToken[tokenId].currentlyListed;
+    }
+
+    // set the token as listed or not listed
+    function setTokenListed(uint256 tokenId, bool listed) public {
+        require(idToListedToken[tokenId].seller == msg.sender || owner == msg.sender, "Not authorized");
+        idToListedToken[tokenId].currentlyListed = listed;
+    }
+
+    // // list nft again after auction from the new owner
+    // function listNFTAgain(uint256 tokenId) public {
+    //     idToListedToken[tokenId].currentlyListed = true;
+    //     idToListedToken[tokenId].seller = payable(msg.sender);
+    //     idToListedToken[tokenId].owner = payable(address(this));
+    //     _transfer(msg.sender, address(this), tokenId);
+    //     approve(address(this), tokenId);
+    // }
+
+    /// Owner calls this to re‑list their NFT at a new price
+    function listNFTAgain(uint256 tokenId, uint256 price) external payable{
+        // Make sure the sender sent enough ETH to pay for listing
+        require(msg.value == listPrice, "Hopefully sending the correct price");
+
+        // Transfer the NFT into this contract
+        _transfer(msg.sender, address(this), tokenId);
+        
+        // Update our on‑chain listing record
+        idToListedToken[tokenId].tokenId = tokenId;
+        idToListedToken[tokenId].price = price;
+        idToListedToken[tokenId].currentlyListed = true;
+        idToListedToken[tokenId].seller = payable(msg.sender);
+        idToListedToken[tokenId].owner = payable(address(this));
+
+        // Allow the marketplace (this contract) to handle sales later
+        // approve(address(this), tokenId);
+    }
+
+    // update the new seller of the token after auction
+    function updateOwner(uint tokenId, address newSeller) public {
+        idToListedToken[tokenId].owner = payable(newSeller);
+        idToListedToken[tokenId].seller = payable(newSeller);
+    }
+
+    // update the new price of the token after auction
+    function updatePrice(uint tokenId, uint256 newPrice) public {
+        idToListedToken[tokenId].price = newPrice;
+    }
+
+
+
 }

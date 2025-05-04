@@ -1,103 +1,366 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./NFTAuction.sol";
 
-contract Auction is ERC721URIStorage {
-    uint256 private _tokenId = 1;
+contract Auction is ReentrancyGuard {
+    address payable public owner;
+    address public companyAcc;
+    uint public royaltyFee;
 
-    struct AuctionItem {
-        uint256 tokenId;
+    NFTAuction public nftContract;
+
+    uint private ids;
+
+    mapping(uint => AuctionStruct) public auctionedItem;
+    mapping(uint => bool) public auctionedItemExists;
+    mapping(string => uint) public existingURIs;
+    mapping(uint => BidderStruct[]) public biddersOf;
+    
+    // Track all tokens that have active auctions
+    uint[] private activeAuctionIds;
+    // Track all tokens that have been auctioned
+    uint[] private auctionedTokenIds;
+
+    constructor(address _nftContract) {
+        nftContract = NFTAuction(_nftContract);
+        owner = payable(msg.sender);
+        // We will dynamically track auctions instead of relying on ids variable
+    }
+
+    struct BidderStruct {
+        address bidder;
+        uint bidAmount;
+        uint timestamp;
+        bool refunded;
+        bool won;
+    }
+
+    struct AuctionStruct {
+        uint tokenId;
+        address payable owner;
         address payable seller;
-        uint256 startingPrice;
-        uint256 highestBid;
-        address payable highestBidder;
-        uint256 endTime;
-        bool isActive;
+        address winner;
+        uint price;
+        bool sold;
+        bool live;
+        bool biddable;
+        uint bids;
+        uint duration;
+        uint endTime;  // Added endTime field to track when the auction ends
+        uint auctionId; // Unique identifier for the auction
     }
 
-    mapping(uint256 => AuctionItem) public auctions;
-
-    event AuctionCreated(
-        uint256 indexed tokenId,
-        address indexed seller,
-        uint256 startingPrice,
-        uint256 endTime
-    );
-    
-    event BidPlaced(
-        uint256 indexed tokenId,
-        address indexed bidder,
-        uint256 bidAmount
+    event AuctionItemCreated(
+        uint indexed tokenId,
+        address seller,
+        address owner,
+        uint price,
+        bool sold
     );
 
-    event AuctionEnded(
-        uint256 indexed tokenId,
-        address indexed winner,
-        uint256 winningBid
-    );
+    function createAuction(
+        uint tokenId,
+        uint price,
+        uint duration
+    ) public nonReentrant {
+        // get token info from NFTAuction contract
+        NFTAuction.ListedToken memory tokenInfo = nftContract.getListedTokenForId(tokenId);
 
-    constructor() ERC721("AuctionToken", "ATK") {}
-
-    function mintToken(string memory tokenURI) internal returns (bool) {
-         _mint(msg.sender, _tokenId);
-        _setTokenURI(_tokenId, tokenURI);
-         _tokenId++;
-        return true;
-    }
-
-    mapping(address => uint256) biddersData;
-    uint256 public highestBidAmount;
-    address public highestBidder;
-    uint256 startTime = block.timestamp;
-    uint256 endTime;
-
-
-    // put new bid
-    function placeBid() public payable {
-        uint256 totalAmount = biddersData[msg.sender] + msg.value;
-
-        // require(block.timestamp < endTime, "Auction has ended");
-        // require(msg.value > 0, "Bid amount must be greater than zero");
-        // require(totalAmount > highestBidAmount, "Bid amount must be higher than the current highest bid");
+        // Check if token is currently listed in NFTAuction
+        // require(tokenInfo.currentlyListed, "Token is not listed for sale");
         
-        biddersData[msg.sender] = totalAmount;
-        highestBidAmount = totalAmount;
-        highestBidder = msg.sender;
+        // Check if caller is the seller or the owner of the NFTAuction contract
+        require(
+            tokenInfo.seller == msg.sender || 
+            msg.sender == address(nftContract) ||
+            nftContract.getApproved(tokenId) == address(this),
+            "Not authorized to auction this token"
+        );
+        
+        require(price > 0 ether, "Price must not be negative");
+        require(duration > 0, "Auction duration must be greater than 0");
+        
+        // Check if this token already has an active auction
+        require(!auctionedItemExists[tokenId] || !auctionedItem[tokenId].live, 
+                "Token already has an active auction");
+
+        AuctionStruct memory item;
+        item.tokenId = tokenId;
+        item.seller = payable(tokenInfo.seller);
+        item.owner = payable(address(nftContract));
+        item.price = price;
+        item.duration = duration;
+        item.endTime = block.timestamp + duration;
+        item.auctionId = tokenId;  // Using tokenId as the auctionId for simplicity
+
+        auctionedItem[tokenId] = item;
+        auctionedItemExists[tokenId] = true;
+
+        // Check if the auction is not already live
+        if(!auctionedItem[tokenId].live) {
+            // Transfer the token to this contract
+            IERC721(address(nftContract)).transferFrom(
+                address(nftContract),
+                address(this),
+                tokenId
+            );
+            
+            auctionedItem[tokenId].bids = 0;
+            auctionedItem[tokenId].live = true;
+            auctionedItem[tokenId].biddable = true;
+            
+            // Add to active auctions list
+            activeAuctionIds.push(tokenId);
+        }
+
+        emit AuctionItemCreated(
+            tokenId,
+            tokenInfo.seller,
+            address(nftContract),
+            price,
+            false
+        );
     }
 
-    // get contract balance
-    function getContractBalance() public view returns (uint256) {
-        return address(this).balance;
+    function placeBid(uint tokenId) public payable nonReentrant {
+        require(auctionedItemExists[tokenId], "Auction does not exist");
+        require(auctionedItem[tokenId].live, "Auction is not live");
+        require(auctionedItem[tokenId].biddable, "Bidding is not allowed for this auction");
+        require(block.timestamp < auctionedItem[tokenId].endTime, "Auction has ended");
+        require(msg.sender != auctionedItem[tokenId].seller, "Seller cannot bid on their own auction");
+        require(msg.value > auctionedItem[tokenId].price, "Bid must be higher than current price");
+
+        // Store the previous highest bidder to refund them
+        address previousBidder = auctionedItem[tokenId].winner;
+        uint previousBid = auctionedItem[tokenId].price;
+
+        // Create and store the new bid
+        BidderStruct memory bidder;
+        bidder.bidder = msg.sender;
+        bidder.bidAmount = msg.value;
+        bidder.timestamp = block.timestamp;
+        bidder.refunded = false;
+        bidder.won = false;
+
+        biddersOf[tokenId].push(bidder);
+        
+        // Update auction details
+        auctionedItem[tokenId].bids += 1;
+        auctionedItem[tokenId].price = msg.value;
+        auctionedItem[tokenId].winner = msg.sender;
+        
+        // If there was a previous bidder, refund them
+        if (previousBidder != address(0) && previousBid > 0) {
+            // Find the previous bidder in the array and mark as refunded
+            for (uint i = 0; i < biddersOf[tokenId].length - 1; i++) {
+                if (biddersOf[tokenId][i].bidder == previousBidder && 
+                    biddersOf[tokenId][i].bidAmount == previousBid &&
+                    !biddersOf[tokenId][i].refunded) {
+                    biddersOf[tokenId][i].refunded = true;
+                    break;
+                }
+            }
+            
+            // Refund the previous bidder
+            (bool success, ) = payable(previousBidder).call{value: previousBid}("");
+            require(success, "Failed to refund previous bidder");
+        }
+        
+        // Extend auction time if bid is placed in the last 5 minutes (anti-sniping)
+        // if (auctionedItem[tokenId].endTime - block.timestamp < 5 minutes) {
+        //     auctionedItem[tokenId].endTime += 5 minutes;
+        // }
+        
+        emit NewBid(tokenId, msg.sender, msg.value);
     }
 
-    // get bidders bid
-    function getBiddersBid(address _address) public view returns (uint256) {
-        return biddersData[_address];
-    }
+    // claimPrize function to finalize the auction and transfer the NFT to the winner
+    function claimPrize(uint tokenId) public nonReentrant {
+        require(auctionedItemExists[tokenId], "Auction does not exist");
+        // require(block.timestamp > auctionedItem[tokenId].endTime, "Auction is still live");
+        require(auctionedItem[tokenId].live, "Auction is not active or already claimed");
+        require(auctionedItem[tokenId].winner == msg.sender, "You are not the winner of this auction");
+        require(auctionedItem[tokenId].winner != address(0), "No winner for this auction");
 
-    // get highest bid amount
-    function getHighestBidAmount() public view returns (uint256) {
-        return highestBidAmount;
-    }
+        // Get auction details before updating state
+        uint price = auctionedItem[tokenId].price;
+        address payable seller = auctionedItem[tokenId].seller;
+        address payable originalOwner = auctionedItem[tokenId].owner;
+        
+        // Update state before external calls to prevent reentrancy
+        auctionedItem[tokenId].live = false;
+        auctionedItem[tokenId].sold = true;
+        auctionedItem[tokenId].biddable = false;
+        
+        // Remove from active auctions list
+        removeFromActiveAuctions(tokenId);
+        // Add to auctioned token IDs list
+        // This is to keep track of all auctioned tokens, even if they are not live anymore
+        auctionedTokenIds.push(tokenId);
+        
+        // Mark the winning bid
+        for (uint i = 0; i < biddersOf[tokenId].length; i++) {
+            if (biddersOf[tokenId][i].bidder == msg.sender && 
+                biddersOf[tokenId][i].bidAmount == price) {
+                biddersOf[tokenId][i].won = true;
+                break;
+            }
+        }
+        
+        // Calculate royalties
+        uint royalty = (price * royaltyFee) / 100;
+        uint sellerAmount = price - royalty;
 
-    // highest bidder details
-    function getHighestBidder() public view returns (address) {
-        return highestBidder;
-    }
+        // Verify NFT ownership and approval
+        try IERC721(address(nftContract)).ownerOf(tokenId) returns (address currentOwner) {
+            require(currentOwner == address(this), "Auction contract doesn't own the NFT");
+        } catch {
+            revert("NFT ownership verification failed");
+        }
 
-    // end auction
-    // function endAuction(uint _endTime) public {
-    //     endTime = block.timestamp + _endTime;
-    // }
-    
-    // withdraw funds
-    function withdrawFunds(address payable _address) public {
-        if(biddersData[_address] > 0){
-            _address.transfer(biddersData[_address]);
+        // Transfer the NFT to the winner
+        try IERC721(address(nftContract)).transferFrom(address(this), msg.sender, tokenId) {
+            // Update auction owner to winner
+            auctionedItem[tokenId].owner = payable(msg.sender);
+            // Update the NFTAuction contract with the new owner
+            nftContract.updateOwner(tokenId, msg.sender);
+            // Update the NFTAuction contract with the new price
+            nftContract.updatePrice(tokenId, price);
+            
+            // Send payments
+            (bool successSeller, ) = seller.call{value: sellerAmount}("");
+            require(successSeller, "Failed to pay seller");
+            
+            if (royalty > 0 && originalOwner != address(0)) {
+                (bool successRoyalty, ) = originalOwner.call{value: royalty}("");
+                require(successRoyalty, "Failed to pay royalties");
+            }
+            
+            emit AuctionEnded(tokenId, msg.sender, price);
+        } catch {
+            // Revert the state changes if the transfer fails
+            auctionedItem[tokenId].live = true;
+            auctionedItem[tokenId].sold = false;
+            auctionedItem[tokenId].biddable = true;
+            
+            // Add back to active auctions if needed
+            bool found = false;
+            for (uint i = 0; i < activeAuctionIds.length; i++) {
+                if (activeAuctionIds[i] == tokenId) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                activeAuctionIds.push(tokenId);
+            }
+            
+            revert("NFT transfer failed");
         }
     }
 
-    
+    // Helper function to get the current timestamp
+    function getAuctionStatus(uint tokenId) public view returns (
+        bool isLive,
+        bool isSold,
+        uint currentPrice,
+        address currentWinner,
+        uint timeRemaining,
+        uint totalBids
+    ) {
+        require(auctionedItemExists[tokenId], "Auction does not exist");
+        
+        AuctionStruct storage auction = auctionedItem[tokenId];
+        
+        isLive = auction.live;
+        isSold = auction.sold;
+        currentPrice = auction.price;
+        currentWinner = auction.winner;
+        timeRemaining = block.timestamp >= auction.endTime ? 0 : auction.endTime - block.timestamp;
+        totalBids = auction.bids;
+    }
+
+    // Events for tracking auction activity
+    event NewBid(uint tokenId, address bidder, uint amount);
+    event AuctionEnded(uint tokenId, address winner, uint finalPrice);
+
+    // Helper function to remove an auction from active auctions array
+    function removeFromActiveAuctions(uint tokenId) internal {
+        for (uint i = 0; i < activeAuctionIds.length; i++) {
+            if (activeAuctionIds[i] == tokenId) {
+                // Move the last element to this position and pop the last element
+                activeAuctionIds[i] = activeAuctionIds[activeAuctionIds.length - 1];
+                activeAuctionIds.pop();
+                break;
+            }
+        }
+    }
+
+    // Update getActiveAuctions to use the activeAuctionIds array
+    function getActiveAuctions() public view returns (AuctionStruct[] memory) {
+        uint count = 0;
+        
+        // Count actual live auctions (some might have expired but not yet claimed)
+        for (uint i = 0; i < activeAuctionIds.length; i++) {
+            uint tokenId = activeAuctionIds[i];
+            if (auctionedItemExists[tokenId] && auctionedItem[tokenId].live) {
+                count++;
+            }
+        }
+        
+        AuctionStruct[] memory ret = new AuctionStruct[](count);
+        uint j = 0;
+        
+        // Populate the array with active auctions
+        for (uint i = 0; i < activeAuctionIds.length && j < count; i++) {
+            uint tokenId = activeAuctionIds[i];
+            if (auctionedItemExists[tokenId] && auctionedItem[tokenId].live) {
+                ret[j] = auctionedItem[tokenId];
+                j++;
+            }
+        }
+        
+        return ret;
+    }
+
+    // get specific auction details
+    function getAuctionDetails(uint tokenId) public view returns (AuctionStruct memory) {
+        require(auctionedItemExists[tokenId], "Auction does not exist");
+        return auctionedItem[tokenId];
+    }
+
+    // get all bidders for a specific auction
+    function getBidders(uint tokenId) public view returns (BidderStruct[] memory) {
+        require(auctionedItemExists[tokenId], "Auction does not exist");
+        return biddersOf[tokenId];
+    }
+
+    // get all completed auctions
+    function getCompletedAuctions() public view returns (AuctionStruct[] memory) {
+        uint count = 0;
+        
+        // First, count completed auctions
+        for (uint i = 0; i < auctionedTokenIds.length; i++) {
+            if (auctionedItemExists[i] && auctionedItem[i].sold) {
+                count++;
+            }
+        }
+        
+        AuctionStruct[] memory ret = new AuctionStruct[](count);
+        uint j = 0;
+        
+        // Populate array with completed auctions
+        for (uint i = 0; i < auctionedTokenIds.length && j < count; i++) {
+            if (auctionedItemExists[i] && auctionedItem[i].sold) {
+                ret[j] = auctionedItem[i];
+                j++;
+            }
+        }
+        
+        return ret;
+    }
 }
+

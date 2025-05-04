@@ -145,7 +145,7 @@ const Deeds = () => {
       );
 
       // 3. call your read-only getter
-      const raw = await contract.getMyNFTs();
+      const raw = await contract.getMyNFTs(false);
 
       // 4. hydrate each NFT
       const items = await Promise.all(
@@ -220,8 +220,8 @@ const Deeds = () => {
         {/* 📌 Status Section */}
         <div className="status-section">
           <h2>My Deeds</h2>
-          {deedStatus && <p className="error">❌ {deedStatus}</p>}
-          {data.length === 0 && !loading && <p className="subtext">No Deeds yet.</p>}
+          {/* {deedStatus && <p className="error">❌ {deedStatus}</p>}
+          {data.length === 0 && !loading && <p className="subtext">No Deeds yet.</p>} */}
 
         {/* <button onClick={fetchAllNFTs} className="refresh-button">Refresh</button> */}
         {/* <h2>{deedsStatus}</h2> */}

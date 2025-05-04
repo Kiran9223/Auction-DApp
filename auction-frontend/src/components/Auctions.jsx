@@ -2,106 +2,627 @@ import React, {useState, useEffect} from 'react'
 import AuctionCard from './AuctionCard'
 import {ethers} from 'ethers';
 import NFTAuction from '../abis/NFTAuction.json'
+import Auction from '../abis/Auction.json'
 
 const Auctions = () => {
   const [deeds, setDeeds] = useState([]);
+  const [ongoingAuctions, setOngoingAuctions] = useState([]);
+  const [pastAuctions, setPastAuctions] = useState([]);
+  const [nftContract, setNFTContract] = useState(null);
+  const [auctionContract, setAuctionContract] = useState(null);
+  const [signer, setSigner] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [userAddress, setUserAddress] = useState(null);
+  const [notification, setNotification] = useState('');
+  const [isAuctionCreator, setIsAuctionCreator] = useState(false);
 
-  const fetchDeeds = async () => {
+  // Setup blockchain connection
+  useEffect(() => {
+    const setupBlockchain = async () => {
+      try {
+        setLoading(true);
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signerInstance = await provider.getSigner();
+        setSigner(signerInstance);
+        
+        // Store user address for comparisons
+        const address = await signerInstance.getAddress();
+        setUserAddress(address);
+
+        // Connect to NFT contract
+        const nftContractAddress = NFTAuction.networks["5777"].address;
+        const nftContractInstance = new ethers.Contract(
+          nftContractAddress, 
+          NFTAuction.abi, 
+          signerInstance
+        );
+        setNFTContract(nftContractInstance);
+        
+        // Connect to Auction contract
+        const auctionContractAddress = Auction.networks["5777"].address;
+        const auctionContractInstance = new ethers.Contract(
+          auctionContractAddress, 
+          Auction.abi, 
+          signerInstance
+        );
+        setAuctionContract(auctionContractInstance);
+        
+        // Fetch initial data
+        await fetchDeeds(nftContractInstance);
+        await fetchActiveAuctions(auctionContractInstance, nftContractInstance);
+        await fetchCompletedAuctions(auctionContractInstance, nftContractInstance);
+        
+        setLoading(false);
+      } catch (err) {
+        console.error("Error setting up blockchain connection:", err);
+        setError("Failed to connect to blockchain. Please check your wallet connection.");
+        setLoading(false);
+      }
+    };
+
+    setupBlockchain();
+  }, []);
+
+  const fetchDeeds = async (contractInstance) => {
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-
-      const contractAddress = NFTAuction.networks["5777"].address; // ✅ get it from json dynamically
-      const contract = new ethers.Contract(contractAddress, NFTAuction.abi, signer);
-
-      const rawDeeds = await contract.getMyNFTs();
+      console.log("Fetching my NFTs...");
+      const rawDeeds = await contractInstance.getMyNFTs(false);
+      console.log("Raw deeds:", rawDeeds);
 
       const deedsData = await Promise.all(
         rawDeeds.map(async (deed) => {
-          const uri = await contract.tokenURI(deed.tokenId);
-          const response = await fetch(`https://ipfs.io/ipfs/${uri.split('/').pop()}`);
-          const metadata = await response.json();
+          try {
+            const uri = await contractInstance.tokenURI(deed.tokenId);
+            console.log(`Token URI for ${deed.tokenId}:`, uri);
+            
+            // Handle both IPFS and HTTP URIs
+            let metadataUrl = uri;
+            if (uri.startsWith('ipfs://')) {
+              metadataUrl = `https://ipfs.io/ipfs/${uri.split('ipfs://').pop()}`;
+            } else if (uri.includes('/ipfs/')) {
+              metadataUrl = `https://ipfs.io/ipfs/${uri.split('/ipfs/').pop()}`;
+            }
+            
+            const response = await fetch(metadataUrl);
+            if (!response.ok) {
+              throw new Error(`Failed to fetch metadata: ${response.statusText}`);
+            }
+            const metadata = await response.json();
+            console.log(`Metadata for ${deed.tokenId}:`, metadata);
 
-          return {
-            tokenId: deed.tokenId.toString(),
-            name: metadata.name,
-            description: metadata.description,
-            image: metadata.image,
-            price: ethers.formatEther(deed.price),
-            auctionStatus: "upcoming"
-          };
+            // Handle IPFS image paths
+            let imageUrl = metadata.image;
+            if (imageUrl.startsWith('ipfs://')) {
+              imageUrl = `https://ipfs.io/ipfs/${imageUrl.split('ipfs://').pop()}`;
+            } else if (imageUrl.includes('/ipfs/')) {
+              imageUrl = `https://ipfs.io/ipfs/${imageUrl.split('/ipfs/').pop()}`;
+            }
+
+            return {
+              tokenId: deed.tokenId.toString(),
+              name: metadata.name || `Property #${deed.tokenId}`,
+              description: metadata.description || "No description available",
+              image: imageUrl,
+              price: ethers.formatEther(deed.price),
+              auctionStatus: "upcoming"
+            };
+          } catch (err) {
+            console.error(`Error processing deed ${deed.tokenId}:`, err);
+            return {
+              tokenId: deed.tokenId.toString(),
+              name: `Property #${deed.tokenId}`,
+              description: "Metadata unavailable",
+              image: "/placeholder.png",
+              price: ethers.formatEther(deed.price),
+              auctionStatus: "upcoming"
+            };
+          }
         })
       );
 
+      console.log("Processed deeds:", deedsData);
       setDeeds(deedsData);
     } catch (err) {
       console.error("Error loading deeds:", err);
+      setError("Failed to load your NFTs. Please try again later.");
     }
   };
 
-  useEffect(() => {
-    fetchDeeds();
-  }, []);
+  const fetchActiveAuctions = async (auctionContractInstance, nftContractInstance) => {
+    try {
+      console.log("Fetching active auctions...");
+      const activeAuctions = await auctionContractInstance.getActiveAuctions();
+      console.log("Active Auctions raw data:", activeAuctions);
+      
+      if (!activeAuctions || activeAuctions.length === 0) {
+        console.log("No active auctions found");
+        setOngoingAuctions([]);
+        return;
+      }
+      
+      const auctionsData = await Promise.all(
+        activeAuctions.map(async (auction) => {
+          try {
+            if(auction.tokenId == 0n) {
+              console.log(`Token ID is 0, skipping this auction`);
+              return null;
+            }
 
-  const upcomingDeeds = deeds.filter(deed => deed.auctionStatus === "upcoming");
-  const ongoingDeeds = deeds.filter(deed => deed.auctionStatus === "ongoing");
+            const tokenId = auction.tokenId.toString();
+            console.log(`Processing auction for token ${tokenId}`);
+            
+            
+            // Get more detailed auction status
+            const status = await auctionContractInstance.getAuctionStatus(tokenId);
+            console.log(`Auction status for token ${tokenId}:`, status);
+            
+            // Verify this auction is actually live
+            if (!status.isLive) {
+              console.log(`Auction for token ${tokenId} is not live, skipping`);
+              return null;
+            }
+            
+            // Get token URI from NFT contract
+            let metadata = { name: `Property #${tokenId}`, description: "No description available", image: "/placeholder.png" };
+            try {
+              const uri = await nftContractInstance.tokenURI(tokenId);
+              console.log(`Token URI for ${tokenId}:`, uri);
+              
+              // Handle both IPFS and HTTP URIs
+              let metadataUrl = uri;
+              if (uri.startsWith('ipfs://')) {
+                metadataUrl = `https://ipfs.io/ipfs/${uri.split('ipfs://').pop()}`;
+              } else if (uri.includes('/ipfs/')) {
+                metadataUrl = `https://ipfs.io/ipfs/${uri.split('/ipfs/').pop()}`;
+              }
+              
+              const response = await fetch(metadataUrl);
+              if (response.ok) {
+                metadata = await response.json();
+                console.log(`Metadata for ${tokenId}:`, metadata);
+                
+                // Handle IPFS image paths
+                if (metadata.image && metadata.image.startsWith('ipfs://')) {
+                  metadata.image = `https://ipfs.io/ipfs/${metadata.image.split('ipfs://').pop()}`;
+                } else if (metadata.image && metadata.image.includes('/ipfs/')) {
+                  metadata.image = `https://ipfs.io/ipfs/${metadata.image.split('/ipfs/').pop()}`;
+                }
+              } else {
+                console.warn(`Failed to fetch metadata for token ${tokenId}: ${response.statusText}`);
+              }
+            } catch (err) {
+              console.error(`Error fetching metadata for token ${tokenId}:`, err);
+            }
+            
+            // Get current timestamp for remaining time calculation
+            const currentTime = Math.floor(Date.now() / 1000);
+            const endTime = parseInt(auction.endTime);
+            const remainingTime = endTime > currentTime ? endTime - currentTime : 0;
+            
+            return {
+              auctionId: tokenId, // Using tokenId as auctionId since they're mapped 1:1
+              tokenId: tokenId,
+              name: metadata.name || `Property #${tokenId}`,
+              description: metadata.description || "No description available",
+              image: metadata.image || "/placeholder.png",
+              startingPrice: ethers.formatEther(auction.price),
+              currentBid: ethers.formatEther(status.currentPrice),
+              remainingTime: remainingTime,
+              seller: auction.seller,
+              winner: status.currentWinner,
+              totalBids: status.totalBids.toString(),
+              endTime: endTime,
+              isLive: status.isLive,
+              auctionEnded: (endTime <= currentTime)
+            };
+          } catch (err) {
+            console.error(`Error processing auction for token:`, err);
+            return null;
+          }
+        })
+      );
+      
+      // Filter out any null results from errors
+      const validAuctions = auctionsData.filter(auction => auction !== null);
+      console.log("Processed active auctions:", validAuctions);
+      setOngoingAuctions(validAuctions);
+    } catch (err) {
+      console.error("Error loading active auctions:", err);
+      setError("Failed to load active auctions. Please try again later.");
+    }
+  };
+  
+  const fetchCompletedAuctions = async (auctionContractInstance, nftContractInstance) => {
+    try {
+      console.log("Fetching completed auctions...");
+      const completedAuctions = await auctionContractInstance.getCompletedAuctions();
+      console.log("Completed Auctions raw data:", completedAuctions);
+      
+      if (!completedAuctions || completedAuctions.length === 0) {
+        console.log("No completed auctions found");
+        setPastAuctions([]);
+        return;
+      }
+      
+      const auctionsData = await Promise.all(
+        completedAuctions.map(async (auction) => {
+          try {
+            const tokenId = auction.tokenId.toString();
+            
+            // Get token URI from NFT contract
+            let metadata = { name: `Property #${tokenId}`, description: "No description available", image: "/placeholder.png" };
+            try {
+              const uri = await nftContractInstance.tokenURI(tokenId);
+              
+              // Handle both IPFS and HTTP URIs
+              let metadataUrl = uri;
+              if (uri.startsWith('ipfs://')) {
+                metadataUrl = `https://ipfs.io/ipfs/${uri.split('ipfs://').pop()}`;
+              } else if (uri.includes('/ipfs/')) {
+                metadataUrl = `https://ipfs.io/ipfs/${uri.split('/ipfs/').pop()}`;
+              }
+              
+              const response = await fetch(metadataUrl);
+              if (response.ok) {
+                metadata = await response.json();
+                
+                // Handle IPFS image paths
+                if (metadata.image && metadata.image.startsWith('ipfs://')) {
+                  metadata.image = `https://ipfs.io/ipfs/${metadata.image.split('ipfs://').pop()}`;
+                } else if (metadata.image && metadata.image.includes('/ipfs/')) {
+                  metadata.image = `https://ipfs.io/ipfs/${metadata.image.split('/ipfs/').pop()}`;
+                }
+              }
+            } catch (err) {
+              console.error(`Error fetching metadata for token ${tokenId}:`, err);
+            }
+            
+            return {
+              auctionId: tokenId,
+              tokenId: tokenId,
+              name: metadata.name || `Property #${tokenId}`,
+              description: metadata.description || "No description available",
+              image: metadata.image || "/placeholder.png",
+              finalPrice: ethers.formatEther(auction.price),
+              seller: auction.seller,
+              winner: auction.winner
+            };
+          } catch (err) {
+            console.error(`Error processing completed auction:`, err);
+            return null;
+          }
+        })
+      );
+      
+      // Filter out any null results from errors
+      const validAuctions = auctionsData.filter(auction => auction !== null);
+      console.log("Processed completed auctions:", validAuctions);
+      setPastAuctions(validAuctions);
+    } catch (err) {
+      console.error("Error loading completed auctions:", err);
+    }
+  };
 
-  const startAuction = (tokenId) => {
-    setDeeds(prevDeeds => 
-      prevDeeds.map(deed => 
-        deed.tokenId === tokenId ? { ...deed, auctionStatus: "ongoing" } : deed
-      )
-    );
+  const startAuction = async (tokenId, price, duration) => {
+    if (!nftContract || !auctionContract || !signer) {
+      alert("Blockchain connection not established");
+      return;
+    }
+  
+    setLoading(true);
+    setError(null);
+    try {
+      // Convert price (ETH → Wei) and duration (seconds)
+      const priceInWei = ethers.parseEther(price.toString());
+      const durationInSeconds = parseInt(duration, 10);
+      console.log("Price in Wei:", priceInWei.toString());
+      console.log("Duration in seconds:", durationInSeconds);
+  
+      // Confirm you're the owner
+      const signerAddress = await signer.getAddress();
+      const listing = await nftContract.getListedTokenForId(tokenId);
+      if (listing.seller.toLowerCase() !== signerAddress.toLowerCase()) {
+        alert("You're not the seller of this NFT");
+        setLoading(false);
+        return;
+      }
+  
+      // Figure out your Auction contract address
+      const auctionContractAddress = await auctionContract.getAddress();
+      console.log("Auction contract address:", auctionContractAddress);
+  
+      // Approve this token for auctioning
+      console.log("Approving token for auction contract…");
+      const approvalTx = await nftContract.approveTokenForAuction(
+        tokenId,
+        auctionContractAddress
+      );
+      console.log(`⏳ Waiting for approval tx ${approvalTx.hash}`);
+      await approvalTx.wait();
+      console.log("✅ Token approved for auction contract");
+  
+      // Create the auction
+      console.log("Creating auction…");
+      const auctionTx = await auctionContract.createAuction(
+        tokenId,
+        priceInWei,
+        durationInSeconds
+      );
+      console.log(`⏳ Waiting for auction tx ${auctionTx.hash}`);
+      await auctionTx.wait();
+      console.log("🎉 Auction created successfully");
+
+      // Mark the token as Not Listed in the NFT contract
+      const tx = await nftContract.setTokenListed(tokenId, false);
+      console.log(`⏳ Waiting for mark as not listed tx ${tx.hash}`);
+      await tx.wait();
+      console.log("✅ Token marked as not listed in NFT contract");
+  
+      // Update your UI state
+      setDeeds((prev) =>
+        prev.filter((deed) => deed.tokenId !== tokenId)
+      );
+      
+      // Refresh all auction data
+      await fetchActiveAuctions(auctionContract, nftContract);
+      
+      // Show success message
+      setNotification('Auction created successfully!');
+      setTimeout(() => setNotification(''), 5000);
+    } catch (error) {
+      console.error("Error starting auction:", error);
+      setError(`Failed to start auction: ${error.reason || error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const placeBid = async (auctionId, bidAmount) => {
+    if (!auctionContract || !signer) {
+      alert("Blockchain connection not established");
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    try {
+      const bidAmountWei = ethers.parseEther(bidAmount.toString());
+      console.log(`Placing bid of ${bidAmount} ETH on auction ${auctionId}`);
+
+      // Auction creator cannot bid on their own auction
+      const auctionDetails = await auctionContract.getAuctionDetails(auctionId);
+      const auctionCreator = auctionDetails.seller;
+      const userAddr = await signer.getAddress();
+      if (userAddr.toLowerCase() === auctionCreator.toLowerCase()) {
+        // show an alert
+        alert("You cannot bid on your own auction");
+        setLoading(false);
+        setIsAuctionCreator(true);
+        return;
+      }
+      
+      // Check if this bid is in the last 5 minutes of the auction
+      // const auctionDetails = await auctionContract.getAuctionDetails(auctionId);
+      // const currentTime = Math.floor(Date.now() / 1000);
+      // const timeRemaining = Number(auctionDetails.endTime) - currentTime;
+      
+      const tx = await auctionContract.placeBid(auctionId, { value: bidAmountWei });
+      console.log(`⏳ Waiting for bid tx ${tx.hash}`);
+      await tx.wait();
+      console.log("✅ Bid placed successfully");
+      
+      // Refresh auction data
+      await fetchActiveAuctions(auctionContract, nftContract);
+    } catch (error) {
+      console.error("Error placing bid:", error);
+      setError(`Failed to place bid: ${error.reason || error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+
+  const claimPrize = async (auctionId) => {
+    if (!auctionContract || !signer) {
+      alert("Blockchain connection not established");
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    try {
+      console.log(`Checking auction status for ${auctionId} before claiming...`);
+      
+      // Get auction status and details first
+      const status = await auctionContract.getAuctionStatus(auctionId);
+      console.log("Auction status:", status);
+      
+      const auctionDetails = await auctionContract.getAuctionDetails(auctionId);
+      console.log("Auction details:", auctionDetails);
+      
+      const userAddr = await signer.getAddress();
+      console.log("User address:", userAddr);
+      console.log("Winner address:", status.currentWinner);
+      
+      // Manual checks before attempting the blockchain transaction
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      if (!status.isLive) {
+        throw new Error("Auction is not active (already claimed or cancelled)");
+      }
+      // console.log("Current time:", currentTime);
+      // console.log("Auction end time:", auctionDetails.endTime);
+      // if (BigInt(currentTime) <= BigInt(auctionDetails.endTime)) {
+      //   console.log("Auction end time:", auctionDetails.endTime);
+      //   throw new Error("Auction has not ended yet");
+      // }
+      
+      if (status.currentWinner.toLowerCase() !== userAddr.toLowerCase()) {
+        throw new Error("You are not the winner of this auction");
+      }
+      
+      console.log(`Claiming prize for auction ${auctionId}`);
+      
+      // When all checks pass, proceed with the claim
+      const tx = await auctionContract.claimPrize(auctionId);
+      console.log(`⏳ Waiting for claim tx ${tx.hash}`);
+      
+      // Wait for transaction confirmation
+      const receipt = await tx.wait();
+      console.log("Transaction receipt:", receipt);
+
+      
+      // try {
+      //   // 1) Simulate the call
+      //   const tx = await auctionContract.claimPrize.staticCall(auctionId);
+      //   console.log("Simulated transaction:", tx);
+
+      // } catch (simErr) {
+      //   // callStatic will bubble up the actual `require(...)` message
+      //   console.error("callStatic error object:", simErr);
+
+      //   // ethers v6 puts the human‑readable reason in one of these…
+      //   const reason =
+      //     // this is set when you do `require(..., "Foo")`
+      //     simErr.reason
+      //     // v6 also surfaces a “shortMessage” containing that same text
+      //     ?? simErr.shortMessage
+      //     // some nodes drop both, but leave raw error data here
+      //     ?? simErr.data
+      //     // fallback to the generic JS error message
+      //     ?? simErr.message;
+
+      //   alert(`Cannot claim NFT: ${reason}`);
+      //   return;
+      // }
+      
+      if (receipt.status === 0) {
+        throw new Error("Transaction failed");
+      }
+      
+      console.log("✅ Prize claimed successfully");
+      
+      // Show success message
+      setNotification('NFT claimed successfully!');
+      setTimeout(() => setNotification(''), 5000);
+      
+      // Refresh auction data
+      await fetchActiveAuctions(auctionContract, nftContract);
+      await fetchCompletedAuctions(auctionContract, nftContract);
+      await fetchDeeds(nftContract);
+    } catch (error) {
+      console.error("Error claiming prize:", error);
+      setError(`Failed to claim prize: ${error.reason || error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to check if the current user is the auction winner
+  const isAuctionWinner = (auction) => {
+    if (!userAddress || !auction.winner) return false;
+    return auction.winner.toLowerCase() === userAddress.toLowerCase();
+  };
+  
+  // Function to check if auction is ended but not yet claimed
+  const isEndedButNotClaimed = (auction) => {
+    return auction.auctionEnded && auction.isLive;
   };
   
   return (
     <>
+      {error && <div className="error-message">{error}</div>}
+      {notification && <div className="notification">{notification}</div>}
+      
       <div className='auction-container'>
         <h1>Upcoming Auctions</h1> 
         <div className='card-container'>
-        {deeds.length === 0 ? (
+        {loading && deeds.length === 0 ? (
+            <p>Loading upcoming auctions...</p>
+          ) : deeds.length === 0 ? (
             <p>No upcoming auctions found.</p>
           ) : (
             deeds.map((deed) => (
               <AuctionCard 
                 key={deed.tokenId}
+                startAuction={true}
                 name={deed.name}
                 description={deed.description}
                 image={deed.image}
                 price={deed.price}
                 tokenId={deed.tokenId}
-                buttonType="start"           
-                onButtonClick={() => startAuction(deed.tokenId)}
+                buttonType="start"
+                onButtonClick={(price, duration) => startAuction(deed.tokenId, price, duration)}
               />
             ))
           )}
         </div>
       </div>
+      
       <div className='auction-container'>
         <h1>Ongoing Auctions</h1> 
         <div className='card-container'>
-        {ongoingDeeds.length === 0 ? (
+        {loading && ongoingAuctions.length === 0 ? (
+            <p>Loading ongoing auctions...</p>
+          ) : ongoingAuctions.length === 0 ? (
             <p>No ongoing auctions found.</p>
           ) : (
-            ongoingDeeds.map((deed) => (
+            ongoingAuctions.map((auction) => (
               <AuctionCard 
-                key={deed.tokenId}
-                name={deed.name}
-                description={deed.description}
-                image={deed.image}
-                price={deed.price}
-                tokenId={deed.tokenId}
+                key={auction.auctionId}
+                startAuction={false}
+                name={auction.name}
+                description={auction.description}
+                image={auction.image}
+                price={auction.startingPrice}
+                currentBid={auction.currentBid}
+                tokenId={auction.tokenId}
+                auctionId={auction.auctionId}
+                remainingTime={auction.remainingTime}
+                totalBids={auction.totalBids}
                 buttonType="participate"
+                onButtonClick={(bidAmount) => placeBid(auction.auctionId, bidAmount)}
+                onClaimClick={() => claimPrize(auction.auctionId)}
+                winner={auction.winner}
+                userAddress={userAddress}
+                auctionEnded={auction.auctionEnded}
+                isLive={auction.isLive}
+                isAuctionCreator={isAuctionCreator}
               /> 
             ))
           )}
         </div>
       </div>
+      
       <div className='auction-container'>
         <h1>Past Auctions</h1> 
         <div className='card-container'>
+        {loading && pastAuctions.length === 0 ? (
+            <p>Loading past auctions...</p>
+          ) : pastAuctions.length === 0 ? (
+            <p>No past auctions found.</p>
+          ) : (
+            pastAuctions.map((auction) => (
+              <AuctionCard 
+                key={auction.auctionId}
+                startAuction={false}
+                name={auction.name}
+                description={auction.description}
+                image={auction.image}
+                price={auction.finalPrice}
+                tokenId={auction.tokenId}
+                auctionId={auction.auctionId}
+                buttonType="view"
+                winner={auction.winner}
+                seller={auction.seller}
+              /> 
+            ))
+          )}
         </div>
       </div>
+      
+      {loading && <div className="loading-overlay">Processing blockchain transaction...</div>}
     </>
   )
 }
