@@ -147,9 +147,12 @@ const Deeds = () => {
       // 3. call your read-only getter
       const raw = await contract.getMyNFTs(false);
 
+      const realRaw = raw.filter(i => i.tokenId.toString() !== "0");
+
       // 4. hydrate each NFT
       const items = await Promise.all(
-        raw.map(async (i) => {
+        
+        realRaw.map(async (i) => {
           // pull tokenURI, convert to HTTP URL, fetch metadata
           const uri = GetIpfsUrlFromPinata(await contract.tokenURI(i.tokenId));
           const { data: meta } = await axios.get(uri);
