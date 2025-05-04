@@ -13,6 +13,7 @@ const AuctionCard = ({
   buttonType,
   onButtonClick,
   onClaimClick,
+  onReclaimClick,
   remainingTime,
   totalBids,
   winner,
@@ -166,7 +167,7 @@ const AuctionCard = ({
             <p className="auction-timer">
               <strong>Time remaining:</strong> {formatTime(timeLeft)}
             </p>
-            <p><strong>Starting price:</strong> {price} ETH</p>
+            <p><strong>Seller:</strong> {seller.slice(0, 6)}...{seller.slice(-6)} </p>
             <p><strong>Current bid:</strong> {currentBid || price} ETH</p>
             <p><strong>Highest bidder:</strong> {winner ? `${winner.slice(0, 6)}...${winner.slice(-4)}` : 'No bids yet'}</p>
             <p><strong>Total bids:</strong> {totalBids || 0}</p>
@@ -201,6 +202,18 @@ const AuctionCard = ({
               </button>
             )
           )}
+          
+          { !isWinner && (winner == "0x0000000000000000000000000000000000000000") && 
+            isAuctionCreator && (
+              <button 
+                className="auction-card__button claim" 
+                onClick={() => onReclaimClick(auctionId)}
+              >
+                Reclaim NFT
+              </button>
+            )
+          }
+
         </div>
       );
     } else if (buttonType === 'view') {

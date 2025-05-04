@@ -344,7 +344,8 @@ contract Auction is ReentrancyGuard {
         
         // First, count completed auctions
         for (uint i = 0; i < auctionedTokenIds.length; i++) {
-            if (auctionedItemExists[i] && auctionedItem[i].sold) {
+            uint tokenId = auctionedTokenIds[i];
+            if (auctionedItemExists[tokenId] && auctionedItem[tokenId].sold) {
                 count++;
             }
         }
@@ -354,13 +355,78 @@ contract Auction is ReentrancyGuard {
         
         // Populate array with completed auctions
         for (uint i = 0; i < auctionedTokenIds.length && j < count; i++) {
-            if (auctionedItemExists[i] && auctionedItem[i].sold) {
-                ret[j] = auctionedItem[i];
+            uint tokenId = auctionedTokenIds[i];
+            if (auctionedItemExists[tokenId] && auctionedItem[tokenId].sold) {
+                ret[j] = auctionedItem[tokenId];
                 j++;
             }
         }
         
         return ret;
+    }
+
+    //Reclaim auction if it has ended and not claimed
+    function reclaimAuction(uint tokenId) public nonReentrant {
+        require(auctionedItemExists[tokenId], "Auction does not exist");
+        require(auctionedItem[tokenId].live, "Auction is not active or already claimed");
+        
+        // Check if caller is the seller
+        require(msg.sender == auctionedItem[tokenId].seller, "Only the seller can reclaim an auction");
+        
+        // Check if auction has ended (time-wise)
+        // require(block.timestamp > auctionedItem[tokenId].endTime, "Auction has not ended yet");
+        
+        // Check if there were no bids (winner will be address(0))
+        require(auctionedItem[tokenId].winner == address(0), "Auction has bids and cannot be reclaimed");
+        
+        // Update state before transfers to prevent reentrancy
+        auctionedItem[tokenId].live = false;
+        auctionedItem[tokenId].sold = false;
+        auctionedItem[tokenId].biddable = false;
+        
+        // Remove from active auctions list
+        removeFromActiveAuctions(tokenId);
+        
+        // Add to auctioned token IDs list if it's not already there
+        bool found = false;
+        for (uint i = 0; i < auctionedTokenIds.length; i++) {
+            if (auctionedTokenIds[i] == tokenId) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            auctionedTokenIds.push(tokenId);
+        }
+        
+        // Transfer the NFT back to the seller
+        try IERC721(address(nftContract)).transferFrom(address(this), msg.sender, tokenId) {
+            // Update owner in the NFT contract
+            nftContract.updateOwner(tokenId, msg.sender);
+            
+            // Set as listed again in the NFT contract
+            nftContract.setTokenListed(tokenId, true);
+            
+        } catch {
+            // Revert state changes if transfer fails
+            auctionedItem[tokenId].live = true;
+            auctionedItem[tokenId].sold = false;
+            auctionedItem[tokenId].biddable = true;
+            
+            // Add back to active auctions if needed
+            bool isActive = false;
+            for (uint i = 0; i < activeAuctionIds.length; i++) {
+                if (activeAuctionIds[i] == tokenId) {
+                    isActive = true;
+                    break;
+                }
+            }
+            if (!isActive) {
+                activeAuctionIds.push(tokenId);
+            }
+            
+            revert("NFT transfer failed");
+        }
     }
 }
 
