@@ -403,7 +403,23 @@ const Auctions = () => {
       // Filter out any null results from errors
       const validAuctions = auctionsData.filter(auction => auction !== null);
       console.log("Processed completed auctions:", validAuctions);
-      setPastAuctions(validAuctions);
+
+      // const validAuctions = auctionsData.filter(auction => auction !== null);
+      
+      // Deduplicate by auctionId
+      const seen = new Set();
+      const uniqueAuctions = [];
+      for (const auc of validAuctions) {
+        if (!seen.has(auc.auctionId)) {
+          seen.add(auc.auctionId);
+          uniqueAuctions.push(auc);
+        }
+      }
+    
+      console.log("Processed (deduped) completed auctions:", uniqueAuctions);
+      setPastAuctions(uniqueAuctions);
+
+      // setPastAuctions(validAuctions);
     } catch (err) {
       console.error("Error loading completed auctions:", err);
       setError("Failed to load completed auctions. Please try again later.");
@@ -621,6 +637,7 @@ const Auctions = () => {
       
       const userAddr = await signer.getAddress();
       console.log("User address:", userAddr);
+      console.log("Seller address:", auctionDetails.seller);
       
       // Manual checks before attempting the blockchain transaction
       if (!status.isLive) {
@@ -643,49 +660,62 @@ const Auctions = () => {
       console.log(`Reclaiming auction ${auctionId}`);
       
       // When all checks pass, proceed with the reclaim
-      // const tx = await auctionContract.reclaimAuction(auctionId);
-      // console.log(`⏳ Waiting for reclaim tx ${tx.hash}`);
+      // First check if the contract has approval to transfer the token
+      const tokenOwner = await nftContract.ownerOf(auctionId);
+      console.log("Current token owner:", tokenOwner);
       
-      // // Wait for transaction confirmation
-      // const receipt = await tx.wait();
-      // console.log("Transaction receipt:", receipt);
-
-      try {
-          // 1) Simulate the call
-          await auctionContract.reclaimAuction.staticCall(auctionId);
-        } catch (simErr) {
-          // callStatic will bubble up the actual `require(...)` message
-          console.error("callStatic error object:", simErr);
-
-          // ethers v6 puts the human‑readable reason in one of these…
-          const reason =
-            // this is set when you do `require(..., "Foo")`
-            simErr.reason
-            // v6 also surfaces a “shortMessage” containing that same text
-            ?? simErr.shortMessage
-            // some nodes drop both, but leave raw error data here
-            ?? simErr.data
-            // fallback to the generic JS error message
-            ?? simErr.message;
-
-          alert(`Cannot claim NFT: ${reason}`);
-          return;
+      // print type of auctionContract.address and tokenOwner
+      console.log("auctionContract.address:",Auction.networks["5777"].address);
+      
+      // If the token is owned by the auction contract, proceed with reclaim
+      if (tokenOwner.toLowerCase() === Auction.networks["5777"].address.toLowerCase()) {
+        try {
+                  // 1) Simulate the call
+                  await auctionContract.reclaimAuction.staticCall(auctionId);
+                } catch (simErr) {
+                  // callStatic will bubble up the actual `require(...)` message
+                  console.error("callStatic error object:", simErr);
+        
+                  // ethers v6 puts the human‑readable reason in one of these…
+                  const reason =
+                    // this is set when you do `require(..., "Foo")`
+                    simErr.reason
+                    // v6 also surfaces a “shortMessage” containing that same text
+                    ?? simErr.shortMessage
+                    // some nodes drop both, but leave raw error data here
+                    ?? simErr.data
+                    // fallback to the generic JS error message
+                    ?? simErr.message;
+        
+                  alert(`Cannot claim NFT: ${reason}`);
+                  return;
+                }
+        
+        // Call the actual contract function
+        const tx = await auctionContract.reclaimAuction(auctionId);
+        console.log(`⏳ Waiting for reclaim tx ${tx.hash}`);
+        
+        // Wait for transaction confirmation
+        const receipt = await tx.wait();
+        console.log("Transaction receipt:", receipt);
+        
+        if (receipt.status !== 1) {
+          throw new Error("Transaction failed");
         }
-      
-      if (receipt.status === 0) {
-        throw new Error("Transaction failed");
+        
+        console.log("✅ Auction reclaimed successfully");
+        
+        // Show success message
+        setNotification('NFT reclaimed successfully!');
+        setTimeout(() => setNotification(''), 5000);
+        
+        // Refresh auction data
+        await fetchActiveAuctions(auctionContract, nftContract);
+        await fetchCompletedAuctions(auctionContract, nftContract);
+        await fetchDeeds(nftContract);
+      } else {
+        throw new Error("NFT is not currently owned by the auction contract");
       }
-      
-      console.log("✅ Auction reclaimed successfully");
-      
-      // Show success message
-      setNotification('NFT reclaimed successfully!');
-      setTimeout(() => setNotification(''), 5000);
-      
-      // Refresh auction data
-      await fetchActiveAuctions(auctionContract, nftContract);
-      await fetchCompletedAuctions(auctionContract, nftContract);
-      await fetchDeeds(nftContract);
     } catch (error) {
       console.error("Error reclaiming auction:", error);
       setError(`Failed to reclaim auction: ${error.reason || error.message}`);
@@ -693,6 +723,99 @@ const Auctions = () => {
       setLoading(false);
     }
   };
+
+  // const reclaimAuction = async (auctionId) => {
+  //   if (!auctionContract || !signer) {
+  //     alert("Blockchain connection not established");
+  //     return;
+  //   }
+    
+  //   setLoading(true);
+  //   setError(null);
+  //   try {
+  //     console.log(`Checking auction status for ${auctionId} before reclaiming...`);
+      
+  //     // Get auction status and details first
+  //     const status = await auctionContract.getAuctionStatus(auctionId);
+  //     console.log("Auction status:", status);
+      
+  //     const auctionDetails = await auctionContract.getAuctionDetails(auctionId);
+  //     console.log("Auction details:", auctionDetails);
+      
+  //     const userAddr = await signer.getAddress();
+  //     console.log("User address:", userAddr);
+      
+  //     // Manual checks before attempting the blockchain transaction
+  //     if (!status.isLive) {
+  //       throw new Error("Auction is not active (already claimed or cancelled)");
+  //     }
+      
+  //     if (auctionDetails.seller.toLowerCase() !== userAddr.toLowerCase()) {
+  //       throw new Error("Only the seller can reclaim this auction");
+  //     }
+      
+  //     if (status.currentWinner !== "0x0000000000000000000000000000000000000000") {
+  //       throw new Error("This auction has bids and cannot be reclaimed");
+  //     }
+      
+  //     const currentTime = Math.floor(Date.now() / 1000);
+  //     if (currentTime < parseInt(auctionDetails.endTime)) {
+  //       throw new Error("Auction has not ended yet");
+  //     }
+      
+  //     console.log(`Reclaiming auction ${auctionId}`);
+      
+  //     // When all checks pass, proceed with the reclaim
+  //     // const tx = await auctionContract.reclaimAuction(auctionId);
+  //     // console.log(`⏳ Waiting for reclaim tx ${tx.hash}`);
+      
+  //     // // Wait for transaction confirmation
+  //     // const receipt = await tx.wait();
+  //     // console.log("Transaction receipt:", receipt);
+
+  //     try {
+  //         // 1) Simulate the call
+  //         await auctionContract.reclaimAuction.staticCall(auctionId);
+  //       } catch (simErr) {
+  //         // callStatic will bubble up the actual `require(...)` message
+  //         console.error("callStatic error object:", simErr);
+
+  //         // ethers v6 puts the human‑readable reason in one of these…
+  //         const reason =
+  //           // this is set when you do `require(..., "Foo")`
+  //           simErr.reason
+  //           // v6 also surfaces a “shortMessage” containing that same text
+  //           ?? simErr.shortMessage
+  //           // some nodes drop both, but leave raw error data here
+  //           ?? simErr.data
+  //           // fallback to the generic JS error message
+  //           ?? simErr.message;
+
+  //         alert(`Cannot claim NFT: ${reason}`);
+  //         return;
+  //       }
+      
+  //     if (receipt.status === 0) {
+  //       throw new Error("Transaction failed");
+  //     }
+      
+  //     console.log("✅ Auction reclaimed successfully");
+      
+  //     // Show success message
+  //     setNotification('NFT reclaimed successfully!');
+  //     setTimeout(() => setNotification(''), 5000);
+      
+  //     // Refresh auction data
+  //     await fetchActiveAuctions(auctionContract, nftContract);
+  //     await fetchCompletedAuctions(auctionContract, nftContract);
+  //     await fetchDeeds(nftContract);
+  //   } catch (error) {
+  //     console.error("Error reclaiming auction:", error);
+  //     setError(`Failed to reclaim auction: ${error.reason || error.message}`);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   
   return (
     <>

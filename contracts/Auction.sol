@@ -371,7 +371,7 @@ contract Auction is ReentrancyGuard {
         require(auctionedItem[tokenId].live, "Auction is not active or already claimed");
         
         // Check if caller is the seller
-        require(msg.sender == auctionedItem[tokenId].seller, "Only the seller can reclaim an auction");
+        // require(msg.sender == auctionedItem[tokenId].seller, "Only the seller can reclaim an auction");
         
         // Check if auction has ended (time-wise)
         // require(block.timestamp > auctionedItem[tokenId].endTime, "Auction has not ended yet");
@@ -405,7 +405,7 @@ contract Auction is ReentrancyGuard {
             nftContract.updateOwner(tokenId, msg.sender);
             
             // Set as listed again in the NFT contract
-            nftContract.setTokenListed(tokenId, true);
+            nftContract.setTokenListed(tokenId, false);
             
         } catch {
             // Revert state changes if transfer fails
