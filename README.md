@@ -2,7 +2,7 @@
 ## 🔥An NFT Marketplace and Auction platform (DApp)🔥
 - This project is a full-featured NFT Auction platform DApp, designed and built from scratch.
 ### 🎊 It enables users to:
-- ✅ Mint/Create NFTs (Profile Page)
+- ✅ Mint/Create NFTs (Deeds Page)
      - Users can create their own NFTs by uploading metadata and minting them directly on blockchain.
      - Minted NFTs instantly appear in the user's Profile dashboard.
 
