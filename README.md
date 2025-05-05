@@ -1,15 +1,15 @@
 # 🌟 Meta Mart 🌟
 ## 🔥An NFT Marketplace and Auction platform (DApp)🔥
 
-## CPSC 559 Advanced Blockchain Technologies
+## 💻 CPSC 559 Advanced Blockchain Technologies 💻
 
-## Authors
+## ⌨️ Authors ⌨️
 ```
 Kiran Sukumar, 814198594
 Padmapriya 
 ```
 
-## Installation and Setup 
+## ⚙️ Installation and Setup ⚙️
 - Clone the repository to local
 - Setup Ganache
 - Update truffle-config.js with your port and network id from Ganache
