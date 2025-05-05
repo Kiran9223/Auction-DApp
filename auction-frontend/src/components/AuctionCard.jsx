@@ -39,10 +39,10 @@ const AuctionCard = ({
   // Format remaining time as minutes and seconds
   const formatTime = (seconds) => {
     if (seconds <= 0) return 'Auction ended';
-    
+
     const minutes = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    
+
     return `${minutes}m ${secs}s`;
   };
 
@@ -67,16 +67,16 @@ const AuctionCard = ({
         }
       }
     };
-    
+
     checkUserAddress();
   }, [userAddress, winner]);
 
   // Timer countdown effect
   useEffect(() => {
     setTimeLeft(remainingTime || 0);
-    
+
     if (!remainingTime || remainingTime <= 0) return;
-    
+
     const timer = setInterval(() => {
       setTimeLeft((prevTime) => {
         if (prevTime <= 1) {
@@ -86,7 +86,7 @@ const AuctionCard = ({
         return prevTime - 1;
       });
     }, 1000);
-    
+
     return () => clearInterval(timer);
   }, [remainingTime]);
 
@@ -95,12 +95,12 @@ const AuctionCard = ({
     e.preventDefault();
     const bidAmountNum = parseFloat(bidAmount);
     const currentBidNum = parseFloat(currentBid || price);
-    
+
     if (isNaN(bidAmountNum) || bidAmountNum <= currentBidNum) {
       alert(`Bid must be higher than current price (${currentBidNum} ETH)`);
       return;
     }
-    
+
     onButtonClick(bidAmount);
     setBidAmount('');
   };
@@ -110,17 +110,17 @@ const AuctionCard = ({
     e.preventDefault();
     const priceNum = parseFloat(startingPrice);
     const durationNum = parseInt(duration, 10);
-    
+
     if (isNaN(priceNum) || priceNum <= 0) {
       alert('Please enter a valid price');
       return;
     }
-    
+
     if (isNaN(durationNum) || durationNum <= 0) {
       alert('Please enter a valid duration');
       return;
     }
-    
+
     onButtonClick(startingPrice, durationNum);
   };
 
@@ -129,6 +129,9 @@ const AuctionCard = ({
     if (startAuction) {
       return (
         <div className="auction-card__form">
+          <p><strong>Price:</strong> {price} ETH</p>
+          <p><strong>Token ID:</strong> {tokenId}</p>
+          <p><strong>Description:</strong> {description}</p>
           <div className="form-group">
             <label>Starting Price (ETH):</label>
             <input
@@ -146,7 +149,7 @@ const AuctionCard = ({
               value={duration}
               onChange={(e) => handleDurationChange(e.target.value)}
               required
-            > 
+            >
               {durationOptions.map(option => (
                 <option key={option.value} value={option.value}>
                   {option.label}
@@ -172,7 +175,7 @@ const AuctionCard = ({
             <p><strong>Highest bidder:</strong> {winner ? `${winner.slice(0, 6)}...${winner.slice(-4)}` : 'No bids yet'}</p>
             <p><strong>Total bids:</strong> {totalBids || 0}</p>
           </div>
-          
+
           {timeLeft > 0 ? (
             <form className="bid-form" onSubmit={handleBid}>
               <div className="form-group">
@@ -191,9 +194,9 @@ const AuctionCard = ({
               ) : (
                 <button className="auction-card__button" type="submit">
                   Place Bid
-                </button>  
+                </button>
               )}
-              
+
             </form>
           ) : (
             isWinner && (
@@ -202,11 +205,11 @@ const AuctionCard = ({
               </button>
             )
           )}
-          
-          { timeLeft <= 0 && !isWinner && (winner == "0x0000000000000000000000000000000000000000") && 
+
+          {timeLeft <= 0 && !isWinner && (winner == "0x0000000000000000000000000000000000000000") &&
             isAuctionCreator && (
-              <button 
-                className="auction-card__button claim" 
+              <button
+                className="auction-card__button claim"
                 onClick={() => onReclaimClick(auctionId)}
               >
                 Reclaim NFT
@@ -227,17 +230,17 @@ const AuctionCard = ({
       );
     }
   };
-  
+
   return (
     <div className={`auction-card ${buttonType}`}>
       <div className="auction-card__image">
-        <img src={image} alt={name} onError={(e) => {e.target.src="/placeholder.png"}} />
+        <img src={image} alt={name} onError={(e) => { e.target.src = "/placeholder.png" }} />
       </div>
       <div className="auction-card__content">
         <h3 className="auction-card__title">{name}</h3>
         <p className="auction-card__description">{description}</p>
         <p className="auction-card__token-id">Token ID: {tokenId}</p>
-        
+
         {renderCardContent()}
       </div>
     </div>

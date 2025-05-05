@@ -6,7 +6,7 @@ const NavBar = ({account}) => {
 
   return (
     <nav className='nav'>
-        <Link to="/" className='site-title'>Auction DApp</Link>
+        <Link to="/" className='site-title'>🛸 Meta Mart</Link>
         <ul>
             <CustomLink to="/">Marketplace</CustomLink>
             <CustomLink to="/auction">Auctions</CustomLink>

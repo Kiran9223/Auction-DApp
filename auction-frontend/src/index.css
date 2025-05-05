@@ -47,8 +47,7 @@ html, body, #root {
     justify-content: center;
     overflow-y: auto;
     font-family: 'Arial', sans-serif; /* Optional: set a base font */
-    background-color: #0f0f0f; /* Optional: dark Web3 style background */
-    color: white; /* Optional: default text color */
+    background: radial-gradient(circle at 50% 50%, #302b63, #2a2558, #24204d, #1e1a42, #181538, #12102d, #0a081e, #000000);    color: white; /* Optional: default text color */
     scroll-behavior: smooth; /* Smooth scrolling */
   }
   

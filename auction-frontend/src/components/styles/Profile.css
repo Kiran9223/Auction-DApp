@@ -8,7 +8,7 @@
   .profile-heading {
     font-size: 2.5rem;
     margin-bottom: 1rem;
-    text-shadow: 0 0 8px #7f00ff;
+    text-shadow: 0 0 40px #7f00ff;
   }
   
   .profile-stats {
@@ -26,7 +26,7 @@
   .profile-subheading {
     font-size: 1.75rem;
     margin-top: 2rem;
-    color: #ccc;
+    color: #fff;
   }
   
   .nft-grid {
@@ -61,7 +61,7 @@
   .nft-info h3 {
     margin: 0.5rem 0;
     font-size: 1.2rem;
-    color: #7dfcb1;
+    color: #ffffff;
   }
   
   .nft-info p {
