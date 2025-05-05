@@ -54,3 +54,9 @@ Padmapriya, padmavijay26@csu.fullerton.edu, 829070978
 - In "auction-frontend -> src -> pinata.js" update your secret and key for the IPFS storage (alternatively, can be stored in .env and retrieved)
 - Open new terminal and navigate to "auction-frontend" and execute "npm install"
 - Execute "npm run dev" to start the react application
+
+## ⚓ Sepolia Network Deployment ⚓
+![image](https://github.com/user-attachments/assets/90b5d40c-6f28-4409-be07-0a3c8cdda51d)
+![image](https://github.com/user-attachments/assets/728b271a-a10c-4bf0-8252-9dd72826e4d3)
+![image](https://github.com/user-attachments/assets/3b0f4bd6-e42a-4881-b546-0b9e250f122f)
+
