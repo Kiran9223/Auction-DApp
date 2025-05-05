@@ -15,8 +15,8 @@
 
 ## ⌨️ Authors ⌨️
 ```
-Kiran Sukumar, 814198594
-Padmapriya, 829070978 
+Kiran Sukumar, kiransukumar@csu.fullerton.edu, 814198594
+Padmapriya, padmavijay26@csu.fullerton.edu, 829070978 
 ```
 
 ## ⚙️ Installation and Setup ⚙️
