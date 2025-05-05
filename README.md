@@ -1,5 +1,5 @@
 # 🌟 Meta Mart 🌟
-An NFT Marketplace and Auction platform (DApp)🔥
+## 🔥An NFT Marketplace and Auction platform (DApp)🔥
 
 ## CPSC 559 Advanced Blockchain Technologies
 
