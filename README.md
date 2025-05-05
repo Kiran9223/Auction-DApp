@@ -2,14 +2,37 @@
 ## 🔥An NFT Marketplace and Auction platform (DApp)🔥
 - This project is a full-featured NFT Auction platform DApp, designed and built from scratch.
 ### 🎊 It enables users to:
-- Mint/Create NFTs (from Profile page).
-- View all NFTs (Marketplace page).
-- Buy NFTs directly (Marketplace page — fixed price buy).
-- Start Auctions for NFTs (Auction page — list NFTs for auction).
-- Participate in Auctions (Auction page — live bidding).
-- Claim Won NFTs from Auctions (Auction page — after winning bid).
-- Reclaim NFTs from unsold Auctions (Auction page).
-- View Owned NFTs & Mint new ones (Profile page — NFT dashboard).
+- ✅ Mint/Create NFTs (Profile Page)
+     - Users can create their own NFTs by uploading metadata and minting them directly on blockchain.
+     - Minted NFTs instantly appear in the user's Profile dashboard.
+
+- ✅ View all NFTs (Marketplace Page)
+     - All listed NFTs are displayed in the Marketplace for easy browsing.
+     - Users can view details like name, description, owner, and price.
+
+- ✅ Buy NFTs Directly (Marketplace Page — Fixed Price Buy)
+     - Users can purchase listed NFTs instantly by paying the fixed price.
+     - Once bought, NFTs are transferred directly to the buyer’s wallet.
+
+- ✅ Start Auctions for NFTs (Auction Page)
+     - NFT owners can start timed auctions for their NFTs.
+     - They can set starting price and duration to attract bids.
+
+- ✅ Participate in Auctions (Auction Page — Live Bidding)
+     - Anyone can place live bids on ongoing NFT auctions.
+     - The highest bidder at auction end wins the NFT.
+
+- ✅ Claim Won NFTs from Auctions (Auction Page — After Winning Bid)
+     - Auction winners can claim their NFTs after the auction ends.
+     - NFTs are directly transferred to the winner’s wallet upon claim.
+
+- ✅ Reclaim NFTs from Unsold Auctions (Auction Page)
+     - Sellers can reclaim NFTs from auctions that received no bids.
+     - This ensures unsold NFTs are returned to their original owners.
+
+- ✅ View Owned NFTs & Mint New Ones (Profile Page — NFT Dashboard)
+     - Users can view all NFTs they own in their profile dashboard.
+     - They can also mint brand new NFTs from the same page.
 
 ## 💻 CPSC 559 Advanced Blockchain Technologies 💻
 
