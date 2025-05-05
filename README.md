@@ -1,5 +1,15 @@
 # 🌟 Meta Mart 🌟
 ## 🔥An NFT Marketplace and Auction platform (DApp)🔥
+- This project is a full-featured NFT Auction platform DApp, designed and built from scratch.
+### It enables users to:
+- Mint/Create NFTs (from Profile page).
+- View all NFTs (Marketplace page).
+- Buy NFTs directly (Marketplace page — fixed price buy).
+- Start Auctions for NFTs (Auction page — list NFTs for auction).
+- Participate in Auctions (Auction page — live bidding).
+- Claim Won NFTs from Auctions (Auction page — after winning bid).
+- Reclaim NFTs from unsold Auctions (Auction page).
+- View Owned NFTs & Mint new ones (Profile page — NFT dashboard).
 
 ## 💻 CPSC 559 Advanced Blockchain Technologies 💻
 
