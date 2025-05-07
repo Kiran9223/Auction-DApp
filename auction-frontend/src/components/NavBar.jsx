@@ -6,7 +6,22 @@ const NavBar = ({account}) => {
 
   return (
     <nav className='nav'>
-        <Link to="/" className='site-title'>🛸 Meta Mart</Link>
+        <Link to="/" className='site-title'>
+            <div class="ironman-container">
+            <div class="tech-circuits"></div>
+            <div class="tech-border"></div>
+            <div class="hud-frame"></div>
+            <div class="repulsor-beam"></div>
+            <div class="reactor-glow"></div>
+            <div class="targeting-reticle"></div>
+            <div class="ironman-text">Meta Mart</div>
+            
+            <div class="hud-element hud-top-left">SYS.42.11</div>
+            <div class="hud-element hud-top-right">MARK VII</div>
+            <div class="hud-element hud-bottom-left">PWR:100%</div>
+            <div class="hud-element hud-bottom-right">MRK.NV</div>
+            </div>
+        </Link>
         <ul>
             <CustomLink to="/">Marketplace</CustomLink>
             <CustomLink to="/auction">Auctions</CustomLink>

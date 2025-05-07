@@ -187,9 +187,19 @@ import NFTAuction from '../abis/NFTAuction.json';
 import { getProvider } from '../services/blockchainService';
 import './styles/Profile.css';
 
+// const GetIpfsUrlFromPinata = (pinataUrl) => {
+//   // const parts = pinataUrl.split('/');
+//   var IPFSUrl = pinataUrl.split("/");
+//   IPFSUrl = "https://gateway.pinata.cloud/ipfs/" + IPFSUrl[lastIndex - 1];
+//   // return `https://ipfs.io/ipfs/${parts[parts.length - 1]}`;
+//   return IPFSUrl;
+// };
+
 const GetIpfsUrlFromPinata = (pinataUrl) => {
-  const parts = pinataUrl.split('/');
-  return `https://ipfs.io/ipfs/${parts[parts.length - 1]}`;
+  var IPFSUrl = pinataUrl.split("/");
+  const lastIndex = IPFSUrl.length; // Add this line to define lastIndex
+  IPFSUrl = "https://gateway.pinata.cloud/ipfs/" + IPFSUrl[lastIndex - 1];
+  return IPFSUrl;
 };
 
 export default function Profile() {

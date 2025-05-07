@@ -87,9 +87,11 @@ const Auctions = () => {
             // Handle both IPFS and HTTP URIs
             let metadataUrl = uri;
             if (uri.startsWith('ipfs://')) {
-              metadataUrl = `https://ipfs.io/ipfs/${uri.split('ipfs://').pop()}`;
+              // metadataUrl = `https://ipfs.io/ipfs/${uri.split('ipfs://').pop()}`;
+              metadataUrl = `https://cloudflare-ipfs.com/ipfs/${uri.split('ipfs://').pop()}`;
+              // IPFSUrl = "https://gateway.pinata.cloud/ipfs/" + IPFSUrl[lastIndex - 1];
             } else if (uri.includes('/ipfs/')) {
-              metadataUrl = `https://ipfs.io/ipfs/${uri.split('/ipfs/').pop()}`;
+              metadataUrl = `https://gateway.pinata.cloud/ipfs/${uri.split('/ipfs/').pop()}`;
             }
 
             const response = await fetch(metadataUrl);
@@ -102,9 +104,10 @@ const Auctions = () => {
             // Handle IPFS image paths
             let imageUrl = metadata.image;
             if (imageUrl.startsWith('ipfs://')) {
-              imageUrl = `https://ipfs.io/ipfs/${imageUrl.split('ipfs://').pop()}`;
+              // imageUrl = `https://ipfs.io/ipfs/${imageUrl.split('ipfs://').pop()}`;
+              imageUrl = `https://cloudflare-ipfs.com/ipfs/${imageUrl.split('ipfs://').pop()}`;
             } else if (imageUrl.includes('/ipfs/')) {
-              imageUrl = `https://ipfs.io/ipfs/${imageUrl.split('/ipfs/').pop()}`;
+              imageUrl = `https://gateway.pinata.cloud/ipfs/${imageUrl.split('/ipfs/').pop()}`;
             }
 
             return {
@@ -182,7 +185,8 @@ const Auctions = () => {
               if (uri.startsWith('ipfs://')) {
                 metadataUrl = `https://ipfs.io/ipfs/${uri.split('ipfs://').pop()}`;
               } else if (uri.includes('/ipfs/')) {
-                metadataUrl = `https://ipfs.io/ipfs/${uri.split('/ipfs/').pop()}`;
+                // metadataUrl = `https://ipfs.io/ipfs/${uri.split('/ipfs/').pop()}`;
+                metadataUrl = `https://gateway.pinata.cloud/ipfs/${uri.split('/ipfs/').pop()}`;
               }
 
               const response = await fetch(metadataUrl);
@@ -194,7 +198,8 @@ const Auctions = () => {
                 if (metadata.image && metadata.image.startsWith('ipfs://')) {
                   metadata.image = `https://ipfs.io/ipfs/${metadata.image.split('ipfs://').pop()}`;
                 } else if (metadata.image && metadata.image.includes('/ipfs/')) {
-                  metadata.image = `https://ipfs.io/ipfs/${metadata.image.split('/ipfs/').pop()}`;
+                  // metadata.image = `https://ipfs.io/ipfs/${metadata.image.split('/ipfs/').pop()}`;
+                  imageUrl = `https://gateway.pinata.cloud/ipfs/${imageUrl.split('/ipfs/').pop()}`;
                 }
               } else {
                 console.warn(`Failed to fetch metadata for token ${tokenId}: ${response.statusText}`);
@@ -361,7 +366,8 @@ const Auctions = () => {
               if (uri.startsWith('ipfs://')) {
                 metadataUrl = `https://ipfs.io/ipfs/${uri.split('ipfs://').pop()}`;
               } else if (uri.includes('/ipfs/')) {
-                metadataUrl = `https://ipfs.io/ipfs/${uri.split('/ipfs/').pop()}`;
+                // metadataUrl = `https://ipfs.io/ipfs/${uri.split('/ipfs/').pop()}`;
+                metadataUrl = `https://gateway.pinata.cloud/ipfs/${uri.split('/ipfs/').pop()}`;
               }
 
               const response = await fetch(metadataUrl);
@@ -373,7 +379,8 @@ const Auctions = () => {
                 if (metadata.image && metadata.image.startsWith('ipfs://')) {
                   metadata.image = `https://ipfs.io/ipfs/${metadata.image.split('ipfs://').pop()}`;
                 } else if (metadata.image && metadata.image.includes('/ipfs/')) {
-                  metadata.image = `https://ipfs.io/ipfs/${metadata.image.split('/ipfs/').pop()}`;
+                  // metadata.image = `https://ipfs.io/ipfs/${metadata.image.split('/ipfs/').pop()}`;
+                  imageUrl = `https://gateway.pinata.cloud/ipfs/${imageUrl.split('/ipfs/').pop()}`;
                 }
               } else {
                 console.warn(`Failed to fetch metadata for completed auction ${tokenId}: ${response.statusText}`);

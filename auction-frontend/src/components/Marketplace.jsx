@@ -9,9 +9,65 @@ import ReactCanvasConfetti from 'react-canvas-confetti';
 const GetIpfsUrlFromPinata = (pinataUrl) => {
   var IPFSUrl = pinataUrl.split("/");
   const lastIndex = IPFSUrl.length;
-  IPFSUrl = "https://ipfs.io/ipfs/" + IPFSUrl[lastIndex - 1];
+  // IPFSUrl = "https://ipfs.io/ipfs/" + IPFSUrl[lastIndex - 1];
+
+  IPFSUrl = "https://gateway.pinata.cloud/ipfs/" + IPFSUrl[lastIndex - 1];
   return IPFSUrl;
 };
+
+// const GetIpfsUrlFromPinata = (pinataUrl) => {
+//   // Extract the CID (Content Identifier) from the Pinata URL
+//   const IPFSUrl = pinataUrl.split("/");
+//   const lastIndex = IPFSUrl.length;
+//   const cid = IPFSUrl[lastIndex - 1];
+  
+//   return cid; // Just return the CID for use with the fetchFromIpfs function
+// };
+
+// // Function to fetch from IPFS with automatic gateway fallback
+// const fetchFromIpfs = async (cid) => {
+//   const gateways = [
+//     "https://cloudflare-ipfs.com/ipfs/",
+//     "https://gateway.pinata.cloud/ipfs/",
+//     "https://dweb.link/ipfs/",
+//     "https://ipfs.filebase.io/ipfs/"
+//   ];
+  
+//   let lastError = null;
+  
+//   for (const gateway of gateways) {
+//     try {
+//       const response = await fetch(`${gateway}${cid}`, {
+//         method: 'GET',
+//         headers: {
+//           'Accept': 'application/json',
+//         },
+//         timeout: 5000 // 5 second timeout
+//       });
+      
+//       if (response.ok) {
+//         return await response.json(); // or .text() depending on content type
+//       }
+//     } catch (error) {
+//       console.log(`Failed to fetch from ${gateway}: ${error.message}`);
+//       lastError = error;
+//     }
+//   }
+  
+//   throw new Error(`Failed to fetch from all IPFS gateways: ${lastError?.message}`);
+// };
+
+// // Usage example
+// const getData = async (pinataUrl) => {
+//   const cid = GetIpfsUrlFromPinata(pinataUrl);
+//   try {
+//     const data = await fetchFromIpfs(cid);
+//     return data;
+//   } catch (error) {
+//     console.error("Error fetching IPFS data:", error);
+//     // Handle error appropriately
+//   }
+// };
 
 export const Marketplace = () => {
 
