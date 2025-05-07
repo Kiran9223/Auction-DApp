@@ -238,8 +238,8 @@ const Deeds = () => {
                 ) : (
                   <div className="nft-list">
                     {data.map((item) => (
-                      <div className="nft-card" key={item.tokenId}>
-                        <img src={item.image} alt={item.name} style={{width:'200px', height:'200px', objectFit:'contain'}} />
+                      <div className="nft-card-deed" key={item.tokenId}>
+                        <img src={item.image} alt={item.name} />
 
                         <h2>{item.name}</h2>
                         <p>{item.description}</p>

@@ -311,7 +311,7 @@ export default function Profile() {
       ) : (
         <div className="nft-grid">
           {data.map((item) => (
-            <div className="nft-card" key={item.tokenId}>
+            <div className="nft-card-profile" key={item.tokenId}>
               <img src={item.image} alt={item.name} />
               <div className="nft-info">
                 <h3>{item.name}</h3>
